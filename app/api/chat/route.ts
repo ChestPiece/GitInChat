@@ -2,10 +2,10 @@ export const maxDuration = 30;
 
 import { streamText, stepCountIs } from 'ai';
 import { openai } from '@ai-sdk/openai';
-import { tools } from '@/lib/agent/tools';
+import { tools } from '@/lib/ai/tools';
 import { createClient } from '@/lib/supabase/server';
 import * as messagesService from '@/lib/services/messages';
-import { GITHUB_AGENT_SYSTEM_PROMPT } from '@/lib/agent-system-prompt';
+import { GITHUB_AGENT_SYSTEM_PROMPT } from '@/lib/ai/prompts';
 
 export async function POST(req: Request) {
   const { messages, chatId } = await req.json();
