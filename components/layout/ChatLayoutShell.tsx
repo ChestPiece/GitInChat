@@ -15,8 +15,9 @@ interface ChatLayoutShellProps {
 export function ChatLayoutShell({ children, user }: ChatLayoutShellProps) {
   const router = useRouter()
   const pathname = usePathname()
-  const { chats, createChat } = useChats()
+  const { chats, createChat, deleteChat, updateChat } = useChats()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 
   const handleNewChat = async () => {
     try {
@@ -25,6 +26,27 @@ export function ChatLayoutShell({ children, user }: ChatLayoutShellProps) {
       setIsMobileMenuOpen(false)
     } catch (error) {
       console.error('Failed to create new chat:', error)
+    }
+  }
+
+  const handleDeleteChat = async (id: string) => {
+    if (confirm('Are you sure you want to delete this chat?')) {
+      try {
+        await deleteChat(id)
+        if (pathname === `/chat/${id}`) {
+          router.push('/chat')
+        }
+      } catch (error) {
+        console.error('Failed to delete chat:', error)
+      }
+    }
+  }
+
+  const handleRenameChat = async (id: string, newTitle: string) => {
+    try {
+      await updateChat(id, newTitle)
+    } catch (error) {
+      console.error('Failed to rename chat:', error)
     }
   }
 
@@ -47,7 +69,11 @@ export function ChatLayoutShell({ children, user }: ChatLayoutShellProps) {
       <div className="flex flex-1 overflow-hidden relative">
         <Sidebar 
           chats={formattedChats} 
-          onNewChat={handleNewChat} 
+          onNewChat={handleNewChat}
+          onDeleteChat={handleDeleteChat}
+          onRenameChat={handleRenameChat}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         />
         
         <MobileSidebar 

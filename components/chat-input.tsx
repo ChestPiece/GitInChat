@@ -15,7 +15,7 @@ interface ChatInputProps {
 export function ChatInput({
   onSend,
   disabled = false,
-  placeholder = 'Leave a comment', // GitHub phrasing
+  placeholder = 'Type your message...', // Chat phasing
 }: ChatInputProps) {
   const [message, setMessage] = useState('')
   const [rows, setRows] = useState(3) // Start slightly taller like GitHub

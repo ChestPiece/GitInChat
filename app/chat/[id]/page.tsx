@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, use } from 'react'
 import { ChatMessage } from '@/components/chat-message'
 import { ChatInput } from '@/components/chat-input'
 import { getUser } from '@/lib/auth'
@@ -16,18 +16,19 @@ interface Message {
 }
 
 interface ChatPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default function ChatDetailPage({ params }: ChatPageProps) {
+  const { id } = use(params)
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [user, setUser] = useState<any>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { chats } = useChats()
-  const { messages: dbMessages, sendMessage, fetchMessages } = useMessages(params.id)
+  const { messages: dbMessages, sendMessage, fetchMessages } = useMessages(id)
   const uiMessages = dbMessages; // Declare uiMessages variable
 
   useEffect(() => {
@@ -66,7 +67,7 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
       // Simulate AI response - in a real app, call your API/AI service here
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      const assistantResponse = `Thanks for your message! I received: "${content}"\n\nThis is a simulated response for chat ${params.id}. In a real implementation, this would be connected to your GitHub agent API.`
+      const assistantResponse = `Thanks for your message! I received: "${content}"\n\nThis is a simulated response for chat ${id}. In a real implementation, this would be connected to your GitHub agent API.`
 
       // Send assistant message to database
       await sendMessage(assistantResponse, 'assistant')

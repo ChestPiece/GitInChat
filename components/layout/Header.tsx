@@ -1,6 +1,6 @@
 'use client'
 
-import { Github, Bell, Plus, Menu } from 'lucide-react'
+import { Github, Bell, Plus, Menu, LogOut, User, Settings as SettingsIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -12,6 +12,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import Link from 'next/link'
+import { signOut } from '@/lib/auth'
+import { useToast } from '@/components/ui/use-toast'
 
 interface HeaderProps {
   user?: {
@@ -23,6 +25,16 @@ interface HeaderProps {
 }
 
 export function Header({ user, onMenuClick }: HeaderProps) {
+  const { toast } = useToast()
+
+  const handleSetStatus = () => {
+    toast({
+      description: "Status updated successfully",
+      duration: 2000,
+      className: "bg-[#1f6feb] text-white border-none"
+    })
+  }
+
   return (
     <header className="h-16 bg-[#161b22] border-b border-[#30363d] flex items-center justify-between px-4 lg:px-6">
       <div className="flex items-center gap-4">
@@ -31,50 +43,20 @@ export function Header({ user, onMenuClick }: HeaderProps) {
         </Button>
         <Link href="/chat" className="flex items-center gap-2 text-white font-semibold">
           <Github className="h-8 w-8 text-white" />
-          <span className="hidden lg:inline text-sm font-bold ml-2">GitHub Manager</span>
+          <span className="hidden lg:inline text-sm font-bold ml-2">GitHub Chat</span>
         </Link>
         
         {/* Search Bar - Visual only for now */}
         
 
         <nav className="hidden lg:flex items-center gap-1 ml-2">
-          {['Pull requests', 'Issues', 'Codespaces', 'Marketplace', 'Explore'].map((item) => (
-            <Link 
-              key={item} 
-              href="#" 
-              className="text-[#c9d1d9] hover:text-white text-sm font-semibold px-2 py-1 rounded-md hover:bg-[#1f2428] transition-colors"
-            >
-              {item}
-            </Link>
-          ))}
+          {/* Main Navigation removed for chat focus */}
         </nav>
       </div>
 
       <div className="flex items-center gap-3">
         {/* Create New Dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="hidden sm:flex items-center gap-1 text-[#c9d1d9] hover:bg-[#1f2428] hover:text-white border border-[#30363d] rounded-md px-2 h-8">
-              <Plus className="h-4 w-4" />
-              <span className="ml-1"></span>
-              <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-[#161b22] border-[#30363d] text-[#c9d1d9]">
-            <DropdownMenuItem className="focus:bg-[#1f6feb] focus:text-white cursor-pointer">
-              New repository
-            </DropdownMenuItem>
-            <DropdownMenuItem className="focus:bg-[#1f6feb] focus:text-white cursor-pointer">
-              Import repository
-            </DropdownMenuItem>
-            <DropdownMenuItem className="focus:bg-[#1f6feb] focus:text-white cursor-pointer">
-              New codespace
-            </DropdownMenuItem>
-            <DropdownMenuItem className="focus:bg-[#1f6feb] focus:text-white cursor-pointer">
-              New gist
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Create New Dropdown - Removed for Chat focus */}
 
         <Button variant="ghost" size="icon" className="text-[#c9d1d9] hover:text-white hover:bg-transparent relative">
           <Bell className="h-5 w-5" />
@@ -100,40 +82,34 @@ export function Header({ user, onMenuClick }: HeaderProps) {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-[#30363d]" />
-            <DropdownMenuItem className="focus:bg-[#1f6feb] focus:text-white cursor-pointer group">
+            <DropdownMenuItem 
+              onClick={handleSetStatus}
+              className="focus:bg-[#1f6feb] focus:text-white cursor-pointer group"
+            >
               <div className="flex items-center justify-between w-full">
                 <span>Set status</span>
                 <span className="text-xs text-[#8b949e] group-focus:text-white">⌘E</span>
               </div>
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-[#30363d]" />
-            <DropdownMenuItem className="focus:bg-[#1f6feb] focus:text-white cursor-pointer">
-              Your profile
+            <DropdownMenuItem asChild className="focus:bg-[#1f6feb] focus:text-white cursor-pointer">
+              <Link href="/profile" className="flex items-center w-full">
+                <User className="mr-2 h-4 w-4" />
+                Your profile
+              </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem className="focus:bg-[#1f6feb] focus:text-white cursor-pointer">
-              Your repositories
-            </DropdownMenuItem>
-            <DropdownMenuItem className="focus:bg-[#1f6feb] focus:text-white cursor-pointer">
-              Your organizations
-            </DropdownMenuItem>
-            <DropdownMenuItem className="focus:bg-[#1f6feb] focus:text-white cursor-pointer">
-              Your projects
-            </DropdownMenuItem>
-            <DropdownMenuItem className="focus:bg-[#1f6feb] focus:text-white cursor-pointer">
-              Your stars
+            <DropdownMenuItem asChild className="focus:bg-[#1f6feb] focus:text-white cursor-pointer">
+              <Link href="/settings" className="flex items-center w-full">
+                <SettingsIcon className="mr-2 h-4 w-4" />
+                Settings
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-[#30363d]" />
-            <DropdownMenuItem className="focus:bg-[#1f6feb] focus:text-white cursor-pointer">
-              Upgrade
-            </DropdownMenuItem>
-            <DropdownMenuItem className="focus:bg-[#1f6feb] focus:text-white cursor-pointer">
-              Feature preview
-            </DropdownMenuItem>
-            <DropdownMenuItem className="focus:bg-[#1f6feb] focus:text-white cursor-pointer">
-              Settings
-            </DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-[#30363d]" />
-            <DropdownMenuItem className="focus:bg-[#1f6feb] focus:text-white cursor-pointer">
+            <DropdownMenuItem 
+              className="focus:bg-[#1f6feb] focus:text-white cursor-pointer text-red-400 hover:text-white hover:bg-red-600 focus:bg-red-600"
+              onClick={() => signOut()}
+            >
+               <LogOut className="mr-2 h-4 w-4" />
               Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>
