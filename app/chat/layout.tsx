@@ -1,6 +1,7 @@
 import React from "react"
 import { getUser } from '@/lib/auth'
 import { redirect } from 'next/navigation'
+import { ChatLayoutShell } from '@/components/layout/ChatLayoutShell'
 
 export default async function ChatLayout({
   children,
@@ -13,5 +14,9 @@ export default async function ChatLayout({
     redirect('/auth/login')
   }
 
-  return <>{children}</>
+  return (
+    <ChatLayoutShell user={user}>
+      {children}
+    </ChatLayoutShell>
+  )
 }

@@ -1,11 +1,10 @@
 'use client'
 
-import React from "react"
-
+import React, { useState, useRef, useEffect } from "react"
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Send, Paperclip } from 'lucide-react'
-import { useState, useRef, useEffect } from 'react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface ChatInputProps {
   onSend: (message: string) => void
@@ -16,20 +15,18 @@ interface ChatInputProps {
 export function ChatInput({
   onSend,
   disabled = false,
-  placeholder = 'Ask me anything...',
+  placeholder = 'Leave a comment', // GitHub phrasing
 }: ChatInputProps) {
   const [message, setMessage] = useState('')
-  const [rows, setRows] = useState(1)
+  const [rows, setRows] = useState(3) // Start slightly taller like GitHub
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     const textarea = textareaRef.current
     if (textarea) {
       textarea.style.height = 'auto'
-      const height = Math.min(textarea.scrollHeight, 200)
-      textarea.style.height = `${height}px`
-      const newRows = Math.min(Math.ceil(height / 24), 8)
-      setRows(newRows)
+      const height = Math.min(textarea.scrollHeight, 400) // Allow taller growth
+      textarea.style.height = `${Math.max(height, 100)}px` // Min height
     }
   }, [message])
 
@@ -37,48 +34,81 @@ export function ChatInput({
     if (message.trim() && !disabled) {
       onSend(message)
       setMessage('')
-      setRows(1)
     }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { // GitHub is Ctrl+Enter to submit
       e.preventDefault()
       handleSend()
     }
   }
 
   return (
-    <div className="flex gap-2 md:gap-3 items-end">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="hidden md:flex text-slate-400 hover:text-slate-300 hover:bg-slate-800 flex-shrink-0"
-      >
-        <Paperclip className="w-5 h-5" />
-      </Button>
+    <div className="w-full">
+      <div className="border border-[#30363d] rounded-md bg-[#0d1117] overflow-hidden">
+        {/* Header Tabs */}
+        <Tabs defaultValue="write" className="w-full">
+          <div className="bg-[#0d1117] border-b border-[#30363d] px-2 pt-2">
+            <TabsList className="bg-transparent h-auto p-0 gap-1">
+              <TabsTrigger 
+                value="write" 
+                className="data-[state=active]:bg-[#161b22] data-[state=active]:text-[#c9d1d9] data-[state=active]:border-[#30363d] data-[state=active]:border-b-transparent border border-transparent rounded-t-md px-4 py-2 text-sm font-medium text-[#c9d1d9] hover:text-[#58a6ff]"
+              >
+                Write
+              </TabsTrigger>
+              <TabsTrigger 
+                value="preview" 
+                className="data-[state=active]:bg-[#161b22] data-[state=active]:text-[#c9d1d9] data-[state=active]:border-[#30363d] data-[state=active]:border-b-transparent border border-transparent rounded-t-md px-4 py-2 text-sm font-medium text-[#c9d1d9] hover:text-[#58a6ff]"
+              >
+                Preview
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-      <div className="flex-1 min-w-0">
-        <Textarea
-          ref={textareaRef}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-          disabled={disabled}
-          rows={rows}
-          className="resize-none bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 max-h-48 text-sm md:text-base"
-        />
+          <TabsContent value="write" className="p-2 m-0 bg-[#0d1117]">
+             <Textarea
+              ref={textareaRef}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={placeholder}
+              disabled={disabled}
+              className="w-full min-h-[100px] bg-[#0d1117] border border-[#30363d] text-[#c9d1d9] placeholder:text-[#8b949e] focus:border-[#58a6ff] focus:ring-1 focus:ring-[#58a6ff] rounded-md p-3 text-sm font-mono resize-y"
+            />
+            <div className="flex items-center justify-between mt-2 px-1">
+               <div className="flex items-center text-xs text-[#8b949e]">
+                 <Paperclip className="w-4 h-4 mr-1" />
+                 <span>Attach files by dragging & dropping, selecting or pasting them.</span>
+               </div>
+               {/* Markdown hint */}
+               <a href="#" className="hidden sm:block text-xs text-[#8b949e] hover:text-[#58a6ff]">
+                 <svg className="w-4 h-4 inline-block mr-1 align-sub" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M14.85 3H1.15C.52 3 0 3.52 0 4.15v7.69C0 12.48.52 13 1.15 13h13.69c.64 0 1.15-.52 1.15-1.15V4.15C16 3.52 15.48 3 14.85 3zM9 11H7V8L5.5 9.92 4 8v3H2V5h2l1.5 2L7 5h2v6zm2.99.5L9.5 8H11V5h2v3h1.5l-2.51 3.5z"></path></svg>
+                 Markdown supported
+               </a>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="preview" className="p-4 m-0 min-h-[140px] text-[#c9d1d9] prose prose-invert prose-sm max-w-none">
+             {message ? (
+               <div className="whitespace-pre-wrap">{message}</div>
+             ) : (
+               <p className="text-[#8b949e]">Nothing to preview</p>
+             )}
+          </TabsContent>
+        </Tabs>
+
+        {/* Footer Actions */}
+        <div className="flex justify-end gap-2 p-2 border-t border-[#30363d] bg-[#161b22]">
+           <Button
+             onClick={handleSend}
+             disabled={disabled || !message.trim()}
+             className="bg-[#238636] hover:bg-[#2ea043] text-white font-semibold px-4 py-1.5 h-auto"
+           >
+             Comment
+           </Button>
+        </div>
       </div>
-
-      <Button
-        onClick={handleSend}
-        disabled={disabled || !message.trim()}
-        className="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 disabled:text-slate-500 text-white flex-shrink-0"
-        size="icon"
-      >
-        <Send className="w-4 h-4" />
-      </Button>
     </div>
   )
 }

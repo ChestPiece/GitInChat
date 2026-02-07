@@ -20,41 +20,35 @@ export function ChatMessage({
   const isUser = role === 'user'
 
   return (
-    <div
-      className={cn('flex gap-3 mb-4', isUser && 'flex-row-reverse')}
-    >
-      <Avatar className="w-8 h-8 flex-shrink-0">
+    <div className={cn('flex gap-3 mb-6 relative group', isUser && 'flex-row-reverse')}>
+      <Avatar className="w-10 h-10 flex-shrink-0 border border-[#30363d]">
         <AvatarFallback
           className={cn(
-            'flex items-center justify-center',
-            isUser
-              ? 'bg-blue-600/20 text-blue-400'
-              : 'bg-slate-700 text-slate-300'
+            'flex items-center justify-center bg-[#0d1117] text-[#c9d1d9]',
           )}
         >
-          {isUser ? <User className="w-4 h-4" /> : <Github className="w-4 h-4" />}
+          {isUser ? <User className="w-5 h-5" /> : <Github className="w-5 h-5" />}
         </AvatarFallback>
       </Avatar>
 
-      <div
-        className={cn(
-          'flex flex-col gap-1 max-w-md',
-          isUser && 'items-end'
-        )}
-      >
-        <span className="text-xs text-slate-400 px-2">
-          {isUser ? displayName : 'GitHub Agent'}
-        </span>
-        <div
-          className={cn(
-            'px-3 py-2 rounded-lg text-sm',
-            isUser
-              ? 'bg-blue-600 text-white rounded-br-none'
-              : 'bg-slate-700 text-slate-100 rounded-bl-none'
-          )}
-        >
-          <div className="prose prose-invert prose-sm max-w-none whitespace-pre-wrap">
-            {content}
+      <div className={cn('flex-1 max-w-3xl min-w-0', isUser && 'flex flex-col items-end')}>
+        {/* Comment Box */}
+        <div className="border border-[#30363d] rounded-md bg-[#0d1117] w-full relative">
+          {/* Header */}
+          <div className={cn(
+            "flex items-center gap-2 px-3 py-2 border-b border-[#30363d] bg-[#161b22] rounded-t-md text-xs text-[#8b949e]",
+            isUser ? "flex-row-reverse" : "flex-row"
+          )}>
+            <span className="font-semibold text-[#c9d1d9]">{isUser ? displayName : 'GitHub Agent'}</span>
+            <span>commented</span>
+            <span className="ml-auto"></span>
+          </div>
+
+          {/* Body */}
+          <div className="p-4 text-[#c9d1d9] text-sm overflow-x-auto">
+            <div className="prose prose-invert prose-sm max-w-none whitespace-pre-wrap">
+              {content}
+            </div>
           </div>
         </div>
       </div>

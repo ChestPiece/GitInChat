@@ -1,8 +1,6 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Sidebar } from '@/components/sidebar'
-import { SidebarMobile } from '@/components/sidebar-mobile'
 import { ChatMessage } from '@/components/chat-message'
 import { ChatInput } from '@/components/chat-input'
 import { getUser } from '@/lib/auth'
@@ -88,93 +86,61 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-900">
-        <div className="text-slate-400">Loading...</div>
+      <div className="flex items-center justify-center h-full bg-[#0d1117]">
+        <div className="text-[#8b949e]">Loading...</div>
       </div>
     )
   }
 
   const userName = user?.name || user?.email?.split('@')[0] || 'User'
-  const userEmail = user?.email || ''
-  const userAvatar = user?.avatar
 
   return (
-    <div className="flex h-screen bg-slate-900 relative">
-      {/* Desktop Sidebar */}
-      <div className="hidden md:block">
-        <Sidebar
-          userName={userName}
-          userEmail={userEmail}
-          userAvatar={userAvatar}
-          chats={chats}
-          currentChatId={params.id}
-          onNewChat={handleNewChat}
-        />
+    <>
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        {dbMessages.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-[#161b22] rounded-lg flex items-center justify-center mx-auto mb-4 border border-[#30363d]">
+                <svg
+                  className="w-8 h-8 text-[#8b949e]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-[#c9d1d9] mb-2">Start a conversation</h3>
+              <p className="text-[#8b949e]">Ask me anything about your GitHub repositories</p>
+            </div>
+          </div>
+        ) : (
+          dbMessages.map((message: any) => (
+            <ChatMessage
+              key={message.id}
+              role={message.role}
+              content={message.content}
+              displayName={userName}
+            />
+          ))
+        )}
+        <div ref={messagesEndRef} />
       </div>
 
-      {/* Mobile Sidebar */}
-      <SidebarMobile
-        userName={userName}
-        userEmail={userEmail}
-        userAvatar={userAvatar}
-        chats={chats}
-        currentChatId={params.id}
-        onNewChat={handleNewChat}
-      />
-
-      <main className="flex-1 flex flex-col overflow-hidden pt-12 md:pt-0">
-        {/* Header */}
-        <div className="bg-slate-800 border-b border-slate-700 p-4">
-          <h2 className="text-lg font-semibold text-white">Chat</h2>
-          <p className="text-sm text-slate-400">Conversation with your GitHub agent</p>
-        </div>
-
-        {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          {dbMessages.length === 0 ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-slate-800 rounded-lg flex items-center justify-center mx-auto mb-4">
-                  <svg
-                    className="w-8 h-8 text-slate-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold text-white mb-2">Start a conversation</h3>
-                <p className="text-slate-400">Ask me anything about your GitHub repositories</p>
-              </div>
-            </div>
-          ) : (
-            dbMessages.map((message: any) => (
-              <ChatMessage
-                key={message.id}
-                role={message.role}
-                content={message.content}
-                displayName={userName}
-              />
-            ))
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Input Area */}
-        <div className="bg-slate-800 border-t border-slate-700 p-6">
-          <ChatInput
-            onSend={handleSendMessage}
-            disabled={isLoading}
-            placeholder="Ask about your GitHub repositories..."
-          />
-        </div>
-      </main>
-    </div>
+      {/* Input Area */}
+      <div className="bg-[#0d1117] border-t border-[#30363d] p-4 lg:p-6">
+        <ChatInput
+          onSend={handleSendMessage}
+          disabled={isLoading}
+          placeholder="Ask about your GitHub repositories..."
+        />
+      </div>
+    </>
   )
 }
