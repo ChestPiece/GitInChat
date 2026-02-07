@@ -1,7 +1,7 @@
 'use server'
 
 import { redirect } from 'next/navigation'
-import { createClient } from './supabase/server'
+import { createClient } from '@/lib/supabase/server'
 
 export interface User {
   id: string
@@ -17,6 +17,7 @@ export async function signInWithGithub() {
     provider: 'github',
     options: {
       redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+      scopes: 'repo read:user',
     },
   })
 

@@ -37,6 +37,34 @@ export function ChatInput({
     }
   }
 
+  /* 
+    Global keydown listener to focus input on typing.
+    This mimics GitHub's ability to just start typing to comment.
+  */
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Ignore if focus is already on an input, textarea, or contenteditable
+      if (
+        document.activeElement instanceof HTMLInputElement ||
+        document.activeElement instanceof HTMLTextAreaElement ||
+        (document.activeElement as HTMLElement).isContentEditable
+      ) {
+        return
+      }
+
+      // Ignore modifier keys, function keys, etc.
+      if (e.ctrlKey || e.metaKey || e.altKey || e.key.length > 1) {
+        return
+      }
+
+      // Focus the textarea
+      textareaRef.current?.focus()
+    }
+
+    document.addEventListener('keydown', handleGlobalKeyDown)
+    return () => document.removeEventListener('keydown', handleGlobalKeyDown)
+  }, [])
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { // GitHub is Ctrl+Enter to submit
       e.preventDefault()
@@ -99,11 +127,16 @@ export function ChatInput({
         </Tabs>
 
         {/* Footer Actions */}
-        <div className="flex justify-end gap-2 p-2 border-t border-[#30363d] bg-[#161b22]">
+        <div className="flex justify-between items-center p-2 border-t border-[#30363d] bg-[#161b22]">
+           <div className="hidden sm:flex items-center text-xs text-[#8b949e] px-2 select-none">
+             <span className="border border-[#30363d] rounded px-1.5 py-0.5 bg-[#0d1117] mr-1 text-[10px] font-mono">⌘</span>
+             <span className="border border-[#30363d] rounded px-1.5 py-0.5 bg-[#0d1117] mr-2 text-[10px] font-mono">Enter</span>
+             to submit
+           </div>
            <Button
              onClick={handleSend}
              disabled={disabled || !message.trim()}
-             className="bg-[#238636] hover:bg-[#2ea043] text-white font-semibold px-4 py-1.5 h-auto"
+             className="bg-[#238636] hover:bg-[#2ea043] text-white font-semibold px-4 py-1.5 h-auto ml-auto"
            >
              Comment
            </Button>

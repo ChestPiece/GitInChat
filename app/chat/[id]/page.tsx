@@ -101,8 +101,8 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
         {dbMessages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-[#161b22] rounded-lg flex items-center justify-center mx-auto mb-4 border border-[#30363d]">
+            <div className="text-center max-w-2xl w-full px-4">
+              <div className="w-16 h-16 bg-[#161b22] rounded-lg flex items-center justify-center mx-auto mb-6 border border-[#30363d]">
                 <svg
                   className="w-8 h-8 text-[#8b949e]"
                   fill="none"
@@ -117,8 +117,26 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
                   />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-[#c9d1d9] mb-2">Start a conversation</h3>
-              <p className="text-[#8b949e]">Ask me anything about your GitHub repositories</p>
+              <h3 className="text-xl font-semibold text-[#c9d1d9] mb-2">Welcome to GitHub Chat</h3>
+              <p className="text-[#8b949e] mb-8">Start a conversation by selecting a suggestion below or typing your own query.</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                {[
+                  { title: 'Explain this repository', desc: 'Get a high-level overview of the codebase architecture.' },
+                  { title: 'Find recent bugs', desc: 'Scan issues and pull requests for reported bugs.' },
+                  { title: 'Generate unit tests', desc: 'Create tests for specific components or functions.' },
+                  { title: 'Draft a release', desc: 'Summarize recent changes into a release note.' },
+                ].map((card, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleSendMessage(card.title)}
+                    className="p-4 rounded-md border border-[#30363d] bg-[#161b22] hover:bg-[#1f2428] hover:border-[#8b949e] transition-all group"
+                  >
+                    <div className="font-semibold text-[#c9d1d9] mb-1 group-hover:text-[#58a6ff]">{card.title}</div>
+                    <div className="text-sm text-[#8b949e]">{card.desc}</div>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         ) : (
