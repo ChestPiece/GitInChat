@@ -11,11 +11,12 @@ export const metadata: Metadata = {
   title: 'GitHub Chat - AI-Powered GitHub Management',
   description: 'Chat with your GitHub agent. Manage repositories, issues, and pull requests with AI assistance.',
   generator: 'v0.app',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    userScalable: true,
-  },
+}
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  userScalable: true,
 }
 
 export default function RootLayout({
