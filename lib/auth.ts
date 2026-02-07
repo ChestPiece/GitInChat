@@ -1,41 +1,55 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
+export interface User {
+  id: string
+  email: string
+  name: string
+  avatar?: string
+}
+
+const MOCK_USER: User = {
+  id: '1',
+  email: 'demo@github.com',
+  name: 'Demo User',
+  avatar: 'https://api.github.com/users/torvalds/avatar_url',
+}
+
 export async function signInWithGithub() {
-  const supabase = await createClient()
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'github',
-    options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/callback`,
-    },
+  // Mock GitHub sign in - in production, use actual OAuth
+  const cookieStore = await cookies()
+  cookieStore.set('auth_token', 'mock_token_123', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60, // 7 days
   })
-
-  if (error) {
-    console.error('GitHub sign in error:', error)
-    redirect('/auth/login?error=Could not authenticate with GitHub')
-  }
-
-  if (data?.url) {
-    redirect(data.url)
-  }
+  redirect('/chat')
 }
 
 export async function signOut() {
-  const supabase = await createClient()
-  await supabase.auth.signOut()
+  const cookieStore = await cookies()
+  cookieStore.delete('auth_token')
   redirect('/auth/login')
 }
 
 export async function getSession() {
-  const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  return session
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get('auth_token')
+    return token ? { user: MOCK_USER } : null
+  } catch {
+    return null
+  }
 }
 
 export async function getUser() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  return user
+  try {
+    const session = await getSession()
+    return session?.user || null
+  } catch {
+    return null
+  }
 }

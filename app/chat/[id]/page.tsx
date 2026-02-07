@@ -25,13 +25,12 @@ interface ChatPageProps {
 
 export default function ChatDetailPage({ params }: ChatPageProps) {
   const router = useRouter()
-  const [uiMessages, setUiMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [user, setUser] = useState<any>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { chats } = useChats()
   const { messages: dbMessages, sendMessage, fetchMessages } = useMessages(params.id)
-  const [messages, setMessages] = useState<Message[]>([]); // Declare messages variable
+  const uiMessages = dbMessages; // Declare uiMessages variable
 
   useEffect(() => {
     const initializeUser = async () => {
@@ -55,7 +54,7 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [uiMessages])
+  }, [dbMessages])
 
   const handleSendMessage = async (content: string) => {
     if (!content.trim()) return
@@ -95,9 +94,9 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
     )
   }
 
-  const userName = user.user_metadata?.display_name || user.email?.split('@')[0] || 'User'
-  const userEmail = user.email || ''
-  const userAvatar = user.user_metadata?.avatar_url
+  const userName = user?.name || user?.email?.split('@')[0] || 'User'
+  const userEmail = user?.email || ''
+  const userAvatar = user?.avatar
 
   return (
     <div className="flex h-screen bg-slate-900 relative">

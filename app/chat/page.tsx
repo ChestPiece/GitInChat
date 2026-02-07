@@ -97,9 +97,9 @@ export default function ChatPage() {
     )
   }
 
-  const userName = user.user_metadata?.display_name || user.email?.split('@')[0] || 'User'
-  const userEmail = user.email || ''
-  const userAvatar = user.user_metadata?.avatar_url
+  const userName = user?.name || user?.email?.split('@')[0] || 'User'
+  const userEmail = user?.email || ''
+  const userAvatar = user?.avatar
 
   return (
     <div className="flex h-screen bg-slate-900 relative">

@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { signInWithGithub } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,6 +11,17 @@ import { useSearchParams } from 'next/navigation'
 export default function SignupPage() {
   const searchParams = useSearchParams()
   const error = searchParams.get('error')
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleGithubSignUp = async () => {
+    setIsLoading(true)
+    try {
+      await signInWithGithub()
+    } catch (err) {
+      console.error('Sign up error:', err)
+      setIsLoading(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
@@ -40,15 +52,14 @@ export default function SignupPage() {
               </div>
             )}
 
-            <form action={signInWithGithub}>
-              <Button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold h-10"
-              >
-                <Github className="mr-2 w-4 h-4" />
-                Sign up with GitHub
-              </Button>
-            </form>
+            <Button
+              onClick={handleGithubSignUp}
+              disabled={isLoading}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold h-10"
+            >
+              <Github className="mr-2 w-4 h-4" />
+              {isLoading ? 'Creating account...' : 'Sign up with GitHub'}
+            </Button>
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
