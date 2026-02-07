@@ -8,21 +8,16 @@ import { ChatInput } from '@/components/chat-input'
 import { getUser } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
 import { useChats } from '@/hooks/use-chats'
-
-interface Message {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
-  createdAt: Date
-}
+import { useMessages } from '@/hooks/use-messages'
 
 export default function ChatPage() {
   const router = useRouter()
-  const [messages, setMessages] = useState<Message[]>([])
-  const [isLoading, setIsLoading] = useState(false)
   const [user, setUser] = useState<any>(null)
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null)
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const { chats, createChat } = useChats()
+  const { chats, createChat, isLoading: chatsLoading } = useChats()
+  const { messages, sendMessage, isLoading: messagesLoading } = useMessages(currentChatId)
 
   useEffect(() => {
     const initializeUser = async () => {
@@ -42,54 +37,60 @@ export default function ChatPage() {
     initializeUser()
   }, [router])
 
+  // Auto-create first chat if user has no chats
+  useEffect(() => {
+    const initializeChat = async () => {
+      if (user && !chatsLoading && chats.length === 0) {
+        try {
+          const newChat = await createChat('New Chat')
+          setCurrentChatId(newChat.id)
+        } catch (error) {
+          console.error('Failed to create initial chat:', error)
+        }
+      } else if (chats.length > 0 && !currentChatId) {
+        // Set the most recent chat as active
+        setCurrentChatId(chats[0].id)
+      }
+    }
+
+    initializeChat()
+  }, [user, chats, chatsLoading, currentChatId, createChat])
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
   const handleSendMessage = async (content: string) => {
-    if (!content.trim()) return
+    if (!content.trim() || !currentChatId) return
 
-    // Add user message
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content,
-      createdAt: new Date(),
-    }
-
-    setMessages((prev) => [...prev, userMessage])
-    setIsLoading(true)
-
+    setIsLoadingMessages(true)
     try {
-      // Simulate AI response - in a real app, call your API here
+      // Send user message
+      await sendMessage(content, 'user')
+
+      // Simulate AI response
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: `Thanks for your message! I received: "${content}"\n\nThis is a simulated response. In a real implementation, this would be connected to your GitHub agent API.`,
-        createdAt: new Date(),
-      }
-
-      setMessages((prev) => [...prev, assistantMessage])
+      const assistantResponse = `Thanks for your message! I received: "${content}"\n\nThis is a simulated response. In a real implementation, this would be connected to your GitHub agent API.`
+      
+      await sendMessage(assistantResponse, 'assistant')
     } catch (error) {
       console.error('Failed to send message:', error)
     } finally {
-      setIsLoading(false)
+      setIsLoadingMessages(false)
     }
   }
 
   const handleNewChat = async () => {
     try {
       const newChat = await createChat('New Chat')
-      setMessages([])
-      router.push(`/chat/${newChat.id}`)
+      setCurrentChatId(newChat.id)
     } catch (error) {
       console.error('Failed to create new chat:', error)
     }
   }
 
-  if (!user) {
+  if (!user || chatsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-900">
         <div className="text-slate-400">Loading...</div>
@@ -126,7 +127,9 @@ export default function ChatPage() {
       <main className="flex-1 flex flex-col overflow-hidden pt-12 md:pt-0">
         {/* Header */}
         <div className="bg-slate-800 border-b border-slate-700 p-4">
-          <h2 className="text-lg font-semibold text-white">New Chat</h2>
+          <h2 className="text-lg font-semibold text-white">
+            {currentChatId ? chats.find(c => c.id === currentChatId)?.title || 'New Chat' : 'New Chat'}
+          </h2>
           <p className="text-sm text-slate-400">Start a conversation with your GitHub agent</p>
         </div>
 
@@ -171,7 +174,7 @@ export default function ChatPage() {
         <div className="bg-slate-800 border-t border-slate-700 p-6">
           <ChatInput
             onSend={handleSendMessage}
-            disabled={isLoading}
+            disabled={isLoadingMessages || messagesLoading || !currentChatId}
             placeholder="Ask about your GitHub repositories..."
           />
         </div>
