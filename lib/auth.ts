@@ -1,8 +1,3 @@
-'use server'
-
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
-
 export interface User {
   id: string
   email: string
@@ -17,39 +12,35 @@ const MOCK_USER: User = {
   avatar: 'https://api.github.com/users/torvalds/avatar_url',
 }
 
-export async function signInWithGithub() {
-  // Mock GitHub sign in - in production, use actual OAuth
-  const cookieStore = await cookies()
-  cookieStore.set('auth_token', 'mock_token_123', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 7 * 24 * 60 * 60, // 7 days
-  })
-  redirect('/chat')
-}
-
-export async function signOut() {
-  const cookieStore = await cookies()
-  cookieStore.delete('auth_token')
-  redirect('/auth/login')
-}
-
-export async function getSession() {
-  try {
-    const cookieStore = await cookies()
-    const token = cookieStore.get('auth_token')
-    return token ? { user: MOCK_USER } : null
-  } catch {
-    return null
+export function signInWithGithub() {
+  // Mock GitHub sign in
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('auth_token', 'mock_token_' + Date.now())
+    localStorage.setItem('user', JSON.stringify(MOCK_USER))
+    window.location.href = '/simple-chat'
   }
 }
 
-export async function getUser() {
-  try {
-    const session = await getSession()
-    return session?.user || null
-  } catch {
-    return null
+export function signOut() {
+  // Sign out
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('auth_token')
+    localStorage.removeItem('user')
+    window.location.href = '/auth/simple-login'
   }
+}
+
+export function getUser(): User | null {
+  if (typeof window !== 'undefined') {
+    const user = localStorage.getItem('user')
+    return user ? JSON.parse(user) : null
+  }
+  return null
+}
+
+export function isAuthenticated(): boolean {
+  if (typeof window !== 'undefined') {
+    return !!localStorage.getItem('auth_token')
+  }
+  return false
 }

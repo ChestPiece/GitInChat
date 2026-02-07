@@ -26,8 +26,8 @@ export function Sidebar({
   currentChatId,
   onNewChat,
 }: SidebarProps) {
-  const handleLogout = async () => {
-    await signOut()
+  const handleLogout = () => {
+    signOut()
   }
 
   const handleNewChat = async () => {
