@@ -1,7 +1,7 @@
 'use server'
 
-import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { createClient } from './supabase/server'
 
 export interface User {
   id: string
@@ -10,45 +10,63 @@ export interface User {
   avatar?: string
 }
 
-const MOCK_USER: User = {
-  id: '1',
-  email: 'demo@github.com',
-  name: 'Demo User',
-  avatar: 'https://api.github.com/users/torvalds/avatar_url',
-}
-
 export async function signInWithGithub() {
-  // Mock GitHub sign in - in production, use actual OAuth
-  const cookieStore = await cookies()
-  cookieStore.set('auth_token', 'mock_token_123', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 7 * 24 * 60 * 60, // 7 days
+  const supabase = await createClient()
+  
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'github',
+    options: {
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+    },
   })
-  redirect('/chat')
+
+  if (error) {
+    console.error('GitHub OAuth error:', error)
+    redirect('/auth/error')
+  }
+
+  if (data.url) {
+    redirect(data.url)
+  }
 }
 
 export async function signOut() {
-  const cookieStore = await cookies()
-  cookieStore.delete('auth_token')
+  const supabase = await createClient()
+  await supabase.auth.signOut()
   redirect('/auth/login')
 }
 
 export async function getSession() {
   try {
-    const cookieStore = await cookies()
-    const token = cookieStore.get('auth_token')
-    return token ? { user: MOCK_USER } : null
+    const supabase = await createClient()
+    const { data: { session }, error } = await supabase.auth.getSession()
+    
+    if (error || !session) {
+      return null
+    }
+
+    return session
   } catch {
     return null
   }
 }
 
-export async function getUser() {
+export async function getUser(): Promise<User | null> {
   try {
     const session = await getSession()
-    return session?.user || null
+    
+    if (!session) {
+      return null
+    }
+
+    const user = session.user
+    
+    return {
+      id: user.id,
+      email: user.email || '',
+      name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+      avatar: user.user_metadata?.avatar_url,
+    }
   } catch {
     return null
   }

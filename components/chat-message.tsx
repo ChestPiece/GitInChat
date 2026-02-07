@@ -3,7 +3,6 @@
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { Github, User } from 'lucide-react'
-import ReactMarkdown from 'react-markdown'
 
 interface ChatMessageProps {
   role: 'user' | 'assistant'
@@ -54,21 +53,8 @@ export function ChatMessage({
               : 'bg-slate-700 text-slate-100 rounded-bl-none'
           )}
         >
-          <div className="prose prose-invert prose-sm max-w-none [&>*]:my-1 [&>ul]:my-1 [&>ol]:my-1 [&_code]:bg-slate-900 [&_code]:px-1 [&_code]:rounded [&_code]:text-slate-200">
-            <ReactMarkdown
-              components={{
-                a: ({ node, ...props }) => (
-                  <a
-                    {...props}
-                    className="text-blue-300 hover:underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  />
-                ),
-              }}
-            >
-              {content}
-            </ReactMarkdown>
+          <div className="prose prose-invert prose-sm max-w-none whitespace-pre-wrap">
+            {content}
           </div>
         </div>
       </div>

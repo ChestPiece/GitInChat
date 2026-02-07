@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import * as chatsService from '@/lib/services/chats'
 
 export interface Chat {
   id: string
@@ -10,37 +11,28 @@ export interface Chat {
 }
 
 export function useChats() {
-  const [chats, setChats] = useState<Chat[]>([
-    {
-      id: '1',
-      title: 'Getting Started',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: '2',
-      title: 'Repository Basics',
-      created_at: new Date(Date.now() - 86400000).toISOString(),
-      updated_at: new Date(Date.now() - 86400000).toISOString(),
-    },
-  ])
-  const [isLoading, setIsLoading] = useState(false)
+  const [chats, setChats] = useState<Chat[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const fetchChats = useCallback(async () => {
-    setIsLoading(false)
-    setError(null)
+    try {
+      setIsLoading(true)
+      setError(null)
+      const data = await chatsService.fetchChats()
+      setChats(data)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to fetch chats'
+      setError(message)
+    } finally {
+      setIsLoading(false)
+    }
   }, [])
 
   const createChat = useCallback(
     async (title: string) => {
       try {
-        const newChat: Chat = {
-          id: Math.random().toString(36).substr(2, 9),
-          title: title || 'New Chat',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }
+        const newChat = await chatsService.createChat(title)
         setChats((prev) => [newChat, ...prev])
         return newChat
       } catch (err) {
@@ -54,6 +46,7 @@ export function useChats() {
 
   const deleteChat = useCallback(async (chatId: string) => {
     try {
+      await chatsService.deleteChat(chatId)
       setChats((prev) => prev.filter((chat) => chat.id !== chatId))
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to delete chat'
@@ -64,12 +57,9 @@ export function useChats() {
 
   const updateChat = useCallback(async (chatId: string, title: string) => {
     try {
+      const updatedChat = await chatsService.updateChat(chatId, title)
       setChats((prev) =>
-        prev.map((chat) =>
-          chat.id === chatId
-            ? { ...chat, title, updated_at: new Date().toISOString() }
-            : chat,
-        ),
+        prev.map((chat) => (chat.id === chatId ? updatedChat : chat)),
       )
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to update chat'

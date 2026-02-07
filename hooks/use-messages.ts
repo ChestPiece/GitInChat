@@ -1,6 +1,7 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import * as messagesService from '@/lib/services/messages'
 
 export interface Message {
   id: string
@@ -10,67 +11,56 @@ export interface Message {
   created_at: string
 }
 
-const mockMessages: Record<string, Message[]> = {
-  '1': [
-    {
-      id: '1',
-      chat_id: '1',
-      role: 'assistant',
-      content: 'Welcome to GitHub Chat! I\'m your AI assistant for managing GitHub repositories. How can I help you today?',
-      created_at: new Date(Date.now() - 3600000).toISOString(),
-    },
-    {
-      id: '2',
-      chat_id: '1',
-      role: 'user',
-      content: 'How do I create a new repository?',
-      created_at: new Date(Date.now() - 1800000).toISOString(),
-    },
-    {
-      id: '3',
-      chat_id: '1',
-      role: 'assistant',
-      content: 'To create a new repository:\n\n1. Click the "+" icon in the top right\n2. Select "New repository"\n3. Fill in the details\n4. Choose public or private\n5. Click "Create"\n\nAny other questions?',
-      created_at: new Date(Date.now() - 1600000).toISOString(),
-    },
-  ],
-  '2': [
-    {
-      id: '4',
-      chat_id: '2',
-      role: 'assistant',
-      content: 'Let\'s talk about repository basics. What would you like to know?',
-      created_at: new Date(Date.now() - 86400000).toISOString(),
-    },
-  ],
-}
-
-export function useMessages(chatId: string) {
-  const [messages, setMessages] = useState<Message[]>(mockMessages[chatId] || [])
-  const [isLoading, setIsLoading] = useState(false)
+export function useMessages(chatId: string | null) {
+  const [messages, setMessages] = useState<Message[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const fetchMessages = useCallback(async () => {
-    setIsLoading(false)
+    if (!chatId) {
+      setIsLoading(false)
+      setMessages([])
+      return
+    }
+    
+    try {
+      setIsLoading(true)
+      setError(null)
+      const data = await messagesService.fetchMessages(chatId)
+      setMessages(data)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to fetch messages'
+      setError(message)
+    } finally {
+      setIsLoading(false)
+    }
   }, [chatId])
 
   const sendMessage = useCallback(
     async (content: string, role: 'user' | 'assistant' = 'user') => {
-      const newMessage: Message = {
-        id: Math.random().toString(36).substr(2, 9),
-        chat_id: chatId,
-        role,
-        content,
-        created_at: new Date().toISOString(),
+      if (!chatId) throw new Error('No chat ID provided')
+      
+      try {
+        const newMessage = await messagesService.createMessage(chatId, role, content)
+        setMessages((prev) => [...prev, newMessage])
+        return newMessage
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to send message'
+        setError(message)
+        throw err
       }
-      setMessages((prev) => [...prev, newMessage])
-      return newMessage
     },
     [chatId],
   )
 
+  useEffect(() => {
+    fetchMessages()
+  }, [fetchMessages])
+
   return {
     messages,
     isLoading,
+    error,
     fetchMessages,
     sendMessage,
   }
