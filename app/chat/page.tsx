@@ -22,15 +22,16 @@ export default function ChatPage() {
   const [initialMessages, setInitialMessages] = useState<UIMessage[]>([])
   const [isInitialLoading, setIsInitialLoading] = useState(false)
 
-  // Cast useChat to any to avoid strict type mismatches with installed version
-  const { messages, input, handleInputChange, handleSubmit, append, isLoading, setMessages } = useChat({
+  // Cast useChat options to any to avoid strict type mismatches with installed version
+  // We use sendMessage instead of append because append is missing in this version
+  const { messages, sendMessage, isLoading, setMessages } = useChat({
     api: '/api/chat',
     body: { chatId: currentChatId },
     initialMessages: initialMessages,
     onError: (error: Error) => {
       toast.error('Failed to send message: ' + error.message)
     }
-  }) as any;
+  } as any) as any;
 
   useEffect(() => {
     const initializeUser = async () => {
@@ -102,11 +103,16 @@ export default function ChatPage() {
   const handleSendMessage = async (content: string) => {
     if (!content.trim() || !currentChatId) return
 
-    // Optimistically add user message via append, which triggers the API call
-    await append({
-        role: 'user',
-        content
-    })
+    try {
+        // Optimistically add user message via sendMessage
+        await sendMessage({
+            role: 'user',
+            content
+        })
+    } catch (error: any) {
+        console.error('Error sending message:', error)
+        toast.error('Failed to send message: ' + (error.message || 'Unknown error'))
+    }
   }
 
   const handleNewChat = async () => {

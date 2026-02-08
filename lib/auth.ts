@@ -54,14 +54,13 @@ export async function getSession() {
 
 export async function getUser(): Promise<User | null> {
   try {
-    const session = await getSession()
+    const supabase = await createClient()
+    const { data: { user }, error } = await supabase.auth.getUser()
     
-    if (!session) {
+    if (error || !user) {
       return null
     }
 
-    const user = session.user
-    
     return {
       id: user.id,
       email: user.email || '',

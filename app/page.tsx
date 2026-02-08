@@ -4,11 +4,12 @@ import { redirect } from 'next/navigation'
 export default async function Home({
   searchParams,
 }: {
-  searchParams: { code?: string }
+  searchParams: Promise<{ code?: string }>
 }) {
-  // Handle OAuth callback if code is present
-  if (searchParams.code) {
-    redirect(`/auth/callback?code=${searchParams.code}`)
+  const { code } = await searchParams
+  
+  if (code) {
+    redirect(`/auth/callback?code=${code}`)
   }
 
   const user = await getUser()
