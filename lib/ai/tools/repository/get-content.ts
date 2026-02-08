@@ -9,7 +9,7 @@ const getRepositoryFileContentSchema = z.object({
   path: z.string().describe('Path to the file'),
 });
 
-export const getRepositoryFileContent = tool<any, any>({ // Renaming to avoid conflict with imported function, or just export const
+export const getRepositoryFileContent = tool({ // Renaming to avoid conflict with imported function, or just export const
   description: 'Get the content of a file in a repository. Use this to read code or config files.',
   inputSchema: getRepositoryFileContentSchema,
   execute: async ({ owner, repo, path }: z.infer<typeof getRepositoryFileContentSchema>) => {

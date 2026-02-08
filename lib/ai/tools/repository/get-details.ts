@@ -8,7 +8,7 @@ const getRepositoryDetailsSchema = z.object({
   repo: z.string().describe('Name of the repository'),
 });
 
-export const getRepositoryDetails = tool<any, any>({
+export const getRepositoryDetails = tool({
   description: 'Get details of a specific repository. Use this to get info like stars, forks, issues, etc.',
   inputSchema: getRepositoryDetailsSchema,
   execute: async ({ owner, repo }: z.infer<typeof getRepositoryDetailsSchema>) => {

@@ -5,15 +5,10 @@ import { ChatMessage } from '@/components/chat-message'
 import { ChatInput } from '@/components/chat-input'
 import { getUser } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
-import { useChats } from '@/hooks/use-chats'
-import { useMessages } from '@/hooks/use-messages'
-
-interface Message {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
-  createdAt: Date
-}
+import { useChat } from '@ai-sdk/react'
+import * as messagesService from '@/lib/services/messages'
+import { toast } from 'sonner'
+import { UIMessage } from 'ai'
 
 interface ChatPageProps {
   params: Promise<{
@@ -24,12 +19,25 @@ interface ChatPageProps {
 export default function ChatDetailPage({ params }: ChatPageProps) {
   const { id } = use(params)
   const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
   const [user, setUser] = useState<any>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const { chats } = useChats()
-  const { messages: dbMessages, sendMessage, fetchMessages } = useMessages(id)
-  const uiMessages = dbMessages; // Declare uiMessages variable
+  
+  const [initialMessages, setInitialMessages] = useState<UIMessage[]>([])
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
+
+  const { messages, sendMessage, status, setMessages } = useChat({
+    api: '/api/chat',
+    body: { chatId: id },
+    initialMessages: initialMessages,
+    onError: (error: Error) => {
+      toast.error('Failed to send message: ' + error.message)
+    },
+    onFinish: () => {
+        // Optional: Trigger a router refresh or other side effect if needed
+    }
+  } as any) as any;
+
+  const isLoading = status === 'submitted' || status === 'streaming';
 
   useEffect(() => {
     const initializeUser = async () => {
@@ -40,8 +48,6 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
           return
         }
         setUser(currentUser)
-        // Load messages for this chat
-        await fetchMessages()
       } catch (error) {
         console.error('Failed to get user:', error)
         router.push('/auth/login')
@@ -49,43 +55,52 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
     }
 
     initializeUser()
-  }, [router, fetchMessages])
+  }, [router])
+
+  // Fetch initial messages from DB
+  useEffect(() => {
+    const loadMessages = async () => {
+        setIsInitialLoading(true)
+        try {
+            const fetched = await messagesService.fetchMessages(id)
+            if (fetched && fetched.length > 0) {
+                 const mappedMessages: any[] = fetched.map(m => ({
+                    id: m.id,
+                    role: m.role,
+                    content: m.content,
+                    toolInvocations: [],
+                    parts: [], 
+                 }))
+                 setMessages(mappedMessages)
+            }
+        } catch (e) {
+            console.error(e)
+            toast.error('Failed to load history')
+        } finally {
+            setIsInitialLoading(false)
+        }
+    }
+    loadMessages()
+  }, [id, setMessages])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [dbMessages])
+  }, [messages])
 
   const handleSendMessage = async (content: string) => {
-    if (!content.trim()) return
+      if (!content.trim()) return;
+      try {
+          await sendMessage({
+              role: 'user',
+              content: content,
+          });
+      } catch (error: any) {
+         console.error("Error creating message", error);
+         toast.error("Failed to prevent message");
+      }
+  };
 
-    setIsLoading(true)
-
-    try {
-      // Send user message to database
-      await sendMessage(content, 'user')
-
-      // Simulate AI response - in a real app, call your API/AI service here
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      const assistantResponse = `Thanks for your message! I received: "${content}"\n\nThis is a simulated response for chat ${id}. In a real implementation, this would be connected to your GitHub agent API.`
-
-      // Send assistant message to database
-      await sendMessage(assistantResponse, 'assistant')
-
-      // Refetch messages to show in UI
-      await fetchMessages()
-    } catch (error) {
-      console.error('Failed to send message:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleNewChat = async () => {
-    router.push('/chat')
-  }
-
-  if (!user) {
+  if (!user || isInitialLoading) {
     return (
       <div className="flex items-center justify-center h-full bg-[#0d1117]">
         <div className="text-[#8b949e]">Loading...</div>
@@ -97,62 +112,36 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
 
   return (
     <>
-      {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
-        {dbMessages.length === 0 ? (
+        {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <div className="text-center max-w-2xl w-full px-4">
-              <div className="w-16 h-16 bg-[#161b22] rounded-lg flex items-center justify-center mx-auto mb-6 border border-[#30363d]">
-                <svg
-                  className="w-8 h-8 text-[#8b949e]"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold text-[#c9d1d9] mb-2">Welcome to GitHub Chat</h3>
-              <p className="text-[#8b949e] mb-8">Start a conversation by selecting a suggestion below or typing your own query.</p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-                {[
-                  { title: 'Explain this repository', desc: 'Get a high-level overview of the codebase architecture.' },
-                  { title: 'Find recent bugs', desc: 'Scan issues and pull requests for reported bugs.' },
-                  { title: 'Generate unit tests', desc: 'Create tests for specific components or functions.' },
-                  { title: 'Draft a release', desc: 'Summarize recent changes into a release note.' },
-                ].map((card, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleSendMessage(card.title)}
-                    className="p-4 rounded-md border border-[#30363d] bg-[#161b22] hover:bg-[#1f2428] hover:border-[#8b949e] transition-all group"
-                  >
-                    <div className="font-semibold text-[#c9d1d9] mb-1 group-hover:text-[#58a6ff]">{card.title}</div>
-                    <div className="text-sm text-[#8b949e]">{card.desc}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
+            <div className="text-[#8b949e]">No messages yet. Start the conversation!</div>
           </div>
         ) : (
-          dbMessages.map((message: any) => (
+          messages.map((message: any) => (
             <ChatMessage
               key={message.id}
               role={message.role}
               content={message.content}
               displayName={userName}
+              toolInvocations={message.toolInvocations}
             />
           ))
+        )}
+        {isLoading && (
+             <div className="flex gap-3 mb-6">
+                 <div className="w-10 h-10 flex-shrink-0 border border-[#30363d] rounded-full bg-[#0d1117] flex items-center justify-center text-[#c9d1d9]">
+                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                 </div>
+                 <div className="text-[#8b949e] text-sm self-center animate-pulse">Thinking...</div>
+             </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
       <div className="bg-[#0d1117] border-t border-[#30363d] p-4 lg:p-6">
         <ChatInput
           onSend={handleSendMessage}

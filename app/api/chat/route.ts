@@ -1,6 +1,6 @@
 export const maxDuration = 30;
 
-import { streamText, stepCountIs } from 'ai';
+import { streamText } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { tools } from '@/lib/ai/tools';
 import { createClient } from '@/lib/supabase/server';
@@ -17,12 +17,20 @@ export async function POST(req: Request) {
     return new Response('Unauthorized', { status: 401 });
   }
 
+  // Save the user's message
+  if (chatId && messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.role === 'user') {
+          await messagesService.createMessage(chatId, 'user', lastMessage.content);
+      }
+  }
+
   const result = streamText({
     model: openai('gpt-4o'),
     system: GITHUB_AGENT_SYSTEM_PROMPT,
     messages,
     tools,
-    stopWhen: stepCountIs(10), // Enable multi-step reasoning
+
     onFinish: async ({ response }) => {
        // Save the assistant's response to the database
        // Note: We need to handle tool calls persistence strategy here.
@@ -40,5 +48,8 @@ export async function POST(req: Request) {
     }
   });
 
-  return result.toDataStreamResponse();
+  console.log('StreamText Result Keys:', Object.keys(result));
+  // console.log('StreamText Result Prototype:', Object.getPrototypeOf(result));
+
+  return result.toTextStreamResponse();
 }

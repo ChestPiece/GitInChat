@@ -12,7 +12,7 @@ const updateRepositorySchema = z.object({
   archived: z.boolean().optional().describe('Update archive state (true to archive, false to unarchive)'),
 });
 
-export const updateRepository = tool<any, any>({
+export const updateRepository = tool({
   description: 'Update a repository. Use this to update repo details.',
   inputSchema: updateRepositorySchema,
   execute: async ({ owner, repo, description, homepage, private: isPrivate, archived }: z.infer<typeof updateRepositorySchema>) => {

@@ -8,7 +8,7 @@ const deleteRepositorySchema = z.object({
   repo: z.string().describe('Name of the repository'),
 });
 
-export const deleteRepository = tool<any, any>({
+export const deleteRepository = tool({
   description: 'Delete a repository. Use this to delete a repo.',
   inputSchema: deleteRepositorySchema,
   execute: async ({ owner, repo }: z.infer<typeof deleteRepositorySchema>) => {

@@ -9,7 +9,7 @@ const starRepositorySchema = z.object({
   action: z.enum(['star', 'unstar']).describe('Action to perform'),
 });
 
-export const starRepository = tool<any, any>({
+export const starRepository = tool({
   description: 'Star or unstar a repository. Use this to star/unstar a repo.',
   inputSchema: starRepositorySchema,
   execute: async ({ owner, repo, action }: z.infer<typeof starRepositorySchema>) => {

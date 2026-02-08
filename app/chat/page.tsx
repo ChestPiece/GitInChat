@@ -78,7 +78,7 @@ export default function ChatPage() {
           setIsInitialLoading(true)
           try {
               const fetched = await messagesService.fetchMessages(currentChatId)
-              const mappedMessages: UIMessage[] = fetched.map(m => ({
+              const mappedMessages: any[] = fetched.map(m => ({
                   id: m.id,
                   role: m.role as 'user' | 'assistant',
                   content: m.content,

@@ -10,7 +10,7 @@ const listRepositoriesSchema = z.object({
   affiliation: z.string().optional().describe('Comma-separated list of affiliations: owner, collaborator, organization_member. Default: owner,collaborator,organization_member.'),
 });
 
-export const listRepositories = tool<any, any>({
+export const listRepositories = tool({
   description: 'List the repositories of the authenticated user. Use this to see what repos the user has.',
   inputSchema: listRepositoriesSchema,
   execute: async ({ sort = 'updated', direction = 'desc', limit = 30, visibility = 'all', affiliation }: z.infer<typeof listRepositoriesSchema>) => {

@@ -13,7 +13,7 @@ const searchRepositoriesSchema = z.object({
   limit: z.number().min(1).max(100).optional().describe('Number of results. Default: 10.'),
 });
 
-export const searchRepositories = tool<any, any>({
+export const searchRepositories = tool({
   description: 'Search for repositories on GitHub. Use this to find repos based on a query.',
   inputSchema: searchRepositoriesSchema,
   execute: async ({ query, language, user, topic, sort, order, limit = 10 }: z.infer<typeof searchRepositoriesSchema>) => {

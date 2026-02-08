@@ -10,7 +10,7 @@ const createRepositorySchema = z.object({
   auto_init: z.boolean().optional().describe('Whether to initialize the repository with a README. Default: true.'),
 });
 
-export const createRepository = tool<any, any>({
+export const createRepository = tool({
   description: 'Create a new repository. Use this to create a new repo.',
   inputSchema: createRepositorySchema,
   execute: async ({ name, description, private: isPrivate, auto_init }: z.infer<typeof createRepositorySchema>) => {
