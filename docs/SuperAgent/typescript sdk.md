@@ -1,0 +1,269 @@
+# TypeScript
+URL: /sdk/sdk/typescript
+
+# TypeScript SDK
+
+The `safety-agent` package provides methods for AI agent safety: `guard()` for detecting threats, `redact()` for removing sensitive data, `scan()` for analyzing repositories, and `test()` for running red team scenarios.
+
+## Installation
+
+```bash
+npm install safety-agent
+```
+
+## Quick Start
+
+```typescript
+import { createClient } from "safety-agent";
+
+const client = createClient();
+
+// Guard: Detect threats
+const guardResult = await client.guard({
+  input: "user message to analyze"
+});
+
+// Redact: Remove PII
+const redactResult = await client.redact({
+  input: "My email is john@example.com",
+  model: "openai/gpt-4o-mini"
+});
+
+// Scan: Analyze repository for AI agent attacks
+const scanResult = await client.scan({
+  repo: "https://github.com/user/repo"
+});
+```
+
+***
+
+## Client Configuration
+
+### Basic Configuration
+
+```typescript
+const client = createClient({
+  apiKey: "your-api-key" // Or set SUPERAGENT_API_KEY env var
+});
+```
+
+### Fallback Configuration
+
+The SDK supports automatic fallback to an always-on endpoint when the primary Superagent model experiences cold starts. This is useful for production environments where latency consistency is critical.
+
+```typescript
+const client = createClient({
+  enableFallback: true,           // Enable fallback (default: true)
+  fallbackTimeoutMs: 5000,        // Timeout before fallback (default: 5000ms)
+  fallbackUrl: "https://..."      // Custom fallback URL (optional)
+});
+```
+
+| Option              | Type      | Default                  | Description                              |
+| ------------------- | --------- | ------------------------ | ---------------------------------------- |
+| `apiKey`            | `string`  | `SUPERAGENT_API_KEY` env | Your Superagent API key                  |
+| `enableFallback`    | `boolean` | `true`                   | Enable automatic fallback on timeout     |
+| `fallbackTimeoutMs` | `number`  | `5000`                   | Milliseconds to wait before falling back |
+| `fallbackUrl`       | `string`  | Built-in URL             | Custom fallback endpoint URL             |
+
+The fallback URL can also be set via the `SUPERAGENT_FALLBACK_URL` environment variable.
+
+***
+
+## Guard
+
+The `guard()` method classifies input content as `pass` or `block`. It detects prompt injections, malicious instructions, and security threats.
+
+### Basic Usage
+
+```typescript
+const result = await client.guard({
+  input: "user message to analyze"
+});
+
+if (result.classification === "block") {
+  console.log("Blocked:", result.violation_types);
+  console.log("Reason:", result.reasoning);
+}
+```
+
+### Options
+
+| Option         | Type                    | Required | Default                 | Description                         |
+| -------------- | ----------------------- | -------- | ----------------------- | ----------------------------------- |
+| `input`        | `string \| Blob \| URL` | Yes      | -                       | The input to analyze                |
+| `model`        | `string`                | No       | `superagent/guard-1.7b` | Model in `provider/model` format    |
+| `systemPrompt` | `string`                | No       | -                       | Custom system prompt                |
+| `chunkSize`    | `number`                | No       | `8000`                  | Characters per chunk (0 to disable) |
+
+### Response
+
+| Field             | Type                | Description                                                |
+| ----------------- | ------------------- | ---------------------------------------------------------- |
+| `classification`  | `"pass" \| "block"` | Whether content passed or should be blocked                |
+| `reasoning`       | `string`            | Explanation of why content was classified as pass or block |
+| `violation_types` | `string[]`          | Types of violations detected                               |
+| `cwe_codes`       | `string[]`          | CWE codes associated with violations                       |
+| `usage`           | `TokenUsage`        | Token usage information                                    |
+
+### Input Types
+
+Guard supports multiple input types:
+
+* **Plain text**: Analyzed directly
+* **URLs**: Automatically fetched and analyzed
+* **Blob/File**: Analyzed based on MIME type
+* **PDFs**: Text extracted and analyzed per page
+* **Images**: Requires vision-capable model
+
+```typescript
+// URL input
+const result = await client.guard({
+  input: "https://example.com/document.pdf"
+});
+
+// Image input (requires vision model)
+const result = await client.guard({
+  input: imageBlob,
+  model: "openai/gpt-4o"
+});
+```
+
+***
+
+## Redact
+
+The `redact()` method removes sensitive content from text using placeholders or contextual rewriting.
+
+### Basic Usage
+
+```typescript
+const result = await client.redact({
+  input: "My email is john@example.com and SSN is 123-45-6789",
+  model: "openai/gpt-4o-mini"
+});
+
+console.log(result.redacted);
+// "My email is <EMAIL_REDACTED> and SSN is <SSN_REDACTED>"
+```
+
+### Options
+
+| Option     | Type       | Required | Default     | Description                                  |
+| ---------- | ---------- | -------- | ----------- | -------------------------------------------- |
+| `input`    | `string`   | Yes      | -           | The text to redact                           |
+| `model`    | `string`   | Yes      | -           | Model in `provider/model` format             |
+| `entities` | `string[]` | No       | Default PII | Entity types to redact                       |
+| `rewrite`  | `boolean`  | No       | `false`     | Rewrite contextually instead of placeholders |
+
+### Response
+
+| Field      | Type         | Description                    |
+| ---------- | ------------ | ------------------------------ |
+| `redacted` | `string`     | Sanitized text with redactions |
+| `findings` | `string[]`   | What was redacted              |
+| `usage`    | `TokenUsage` | Token usage information        |
+
+### Rewrite Mode
+
+Contextually rewrites text instead of using placeholders:
+
+```typescript
+const result = await client.redact({
+  input: "My email is john@example.com",
+  model: "openai/gpt-4o-mini",
+  rewrite: true
+});
+
+console.log(result.redacted);
+// "My email is on file"
+```
+
+### Custom Entities
+
+Specify which entity types to redact:
+
+```typescript
+const result = await client.redact({
+  input: "Contact john@example.com or call 555-123-4567",
+  model: "openai/gpt-4o-mini",
+  entities: ["email addresses"] // Only redact emails
+});
+```
+
+### Default Entities
+
+When `entities` is not specified:
+
+* SSNs, Driver's License, Passport Numbers
+* API Keys, Secrets, Passwords
+* Names, Addresses, Phone Numbers
+* Emails, Credit Card Numbers
+
+***
+
+## Scan
+
+The `scan()` method analyzes a repository for AI agent-targeted attacks. It clones the repository into a secure Daytona sandbox and uses OpenCode to detect threats like repo poisoning, prompt injections, and malicious instructions.
+
+### Basic Usage
+
+```typescript
+const response = await client.scan({
+  repo: "https://github.com/user/repo"
+});
+
+console.log(response.result);  // Security report
+console.log(`Cost: $${response.usage.cost.toFixed(4)}`);
+```
+
+### Options
+
+| Option   | Type     | Required | Default                       | Description                            |
+| -------- | -------- | -------- | ----------------------------- | -------------------------------------- |
+| `repo`   | `string` | Yes      | -                             | Git repository URL (https\:// or git@) |
+| `branch` | `string` | No       | Default branch                | Branch, tag, or commit to checkout     |
+| `model`  | `string` | No       | `anthropic/claude-sonnet-4-5` | Model for OpenCode analysis            |
+
+### Response
+
+| Field    | Type        | Description                   |
+| -------- | ----------- | ----------------------------- |
+| `result` | `string`    | Security report from OpenCode |
+| `usage`  | `ScanUsage` | Token usage metrics           |
+
+### ScanUsage
+
+| Field             | Type     | Description                      |
+| ----------------- | -------- | -------------------------------- |
+| `inputTokens`     | `number` | Total input tokens used          |
+| `outputTokens`    | `number` | Total output tokens used         |
+| `reasoningTokens` | `number` | Reasoning tokens (if applicable) |
+| `cost`            | `number` | Total cost in USD                |
+
+### Environment Variables
+
+```bash
+# Required for scan()
+export DAYTONA_API_KEY=your-daytona-api-key
+
+# Required for the model (at least one)
+export ANTHROPIC_API_KEY=your-anthropic-key
+export OPENAI_API_KEY=your-openai-key
+```
+
+### Example: Scanning a Branch
+
+```typescript
+const response = await client.scan({
+  repo: "https://github.com/user/repo",
+  branch: "feature-branch",
+  model: "anthropic/claude-sonnet-4-5"
+});
+
+console.log("Security Report:");
+console.log(response.result);
+console.log(`\nTokens: ${response.usage.inputTokens} in, ${response.usage.outputTokens} out`);
+console.log(`Cost: $${response.usage.cost.toFixed(4)}`);
+}
+```

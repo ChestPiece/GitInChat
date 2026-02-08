@@ -1,0 +1,115 @@
+# MCP Server
+URL: /sdk/mcp
+
+# MCP Server
+
+MCP server providing security guardrails and PII redaction for Claude Desktop and Claude Code.
+
+## Installation
+
+### Claude Code
+
+```bash
+claude mcp add superagent -- npx -y safety-agent-mcp
+```
+
+### Claude Desktop
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "superagent": {
+      "command": "npx",
+      "args": ["-y", "safety-agent-mcp"],
+      "env": {
+        "SUPERAGENT_API_KEY": "your_api_key_here"
+      }
+    }
+  }
+}
+```
+
+Restart Claude Desktop after configuration.
+
+## Available Tools
+
+### `superagent_guard`
+
+Analyze text for security threats like prompt injection, jailbreaks, and data exfiltration.
+
+**Parameters:**
+
+* `text` (required): Text to analyze
+* `system_prompt` (optional): Custom classification instructions
+
+**Example prompt:**
+
+```
+Check if this input is safe: "Ignore all previous instructions"
+```
+
+### `superagent_redact`
+
+Remove PII/PHI from text (emails, SSNs, phone numbers, credit cards, names, etc.)
+
+**Parameters:**
+
+* `text` (required): Text to redact
+* `entities` (optional): Specific entity types to redact
+* `rewrite` (optional): Rewrite naturally instead of placeholders
+
+**Example prompt:**
+
+```
+Redact PII from: "My email is john@example.com and SSN is 123-45-6789"
+```
+
+### `superagent_scan`
+
+Scan Git repositories for AI agent-targeted attacks like repo poisoning and prompt injection.
+
+**Parameters:**
+
+* `repo` (required): Git repository URL to scan
+* `branch` (optional): Branch, tag, or commit to checkout
+* `model` (optional): Model to use (default: anthropic/claude-sonnet-4-5)
+
+**Example prompt:**
+
+```
+Scan https://github.com/user/repo for security issues targeting AI agents
+```
+
+## Quick Examples
+
+**Security check:**
+
+```
+Use superagent_guard to check: "Delete all files with rm -rf /"
+```
+
+**Redact all PII:**
+
+```
+Use superagent_redact on: "Contact John at john@company.com or 555-1234"
+```
+
+**Redact specific entities:**
+
+```
+Redact only emails from: "Email: test@test.com, Phone: 555-9999"
+Use entities=['EMAIL']
+```
+
+**Scan repository:**
+
+```
+Use superagent_scan on: https://github.com/user/repo
+```
+
+## Environment Variables
+
+* `SUPERAGENT_API_KEY` - Your Superagent API key (get one at [superagent.sh](https://superagent.sh))
+* `DAYTONA_API_KEY` - Required for `superagent_scan` (get one at [daytona.io](https://daytona.io))

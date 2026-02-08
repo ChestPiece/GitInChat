@@ -1,0 +1,150 @@
+# Providers
+URL: /sdk/providers
+
+# Providers
+
+Superagent SDK works with any language model. Use the `provider/model` format when specifying models.
+
+## Supported Providers
+
+| Provider          | Model Format                    | Required Env Variables                                        |
+| ----------------- | ------------------------------- | ------------------------------------------------------------- |
+| **Superagent**    | `superagent/{model}`            | None (default for guard)                                      |
+| Anthropic         | `anthropic/{model}`             | `ANTHROPIC_API_KEY`                                           |
+| AWS Bedrock       | `bedrock/{model}`               | `AWS_BEDROCK_API_KEY`<br />`AWS_BEDROCK_REGION` (optional)    |
+| Fireworks         | `fireworks/{model}`             | `FIREWORKS_API_KEY`                                           |
+| Google            | `google/{model}`                | `GOOGLE_API_KEY`                                              |
+| Groq              | `groq/{model}`                  | `GROQ_API_KEY`                                                |
+| OpenAI            | `openai/{model}`                | `OPENAI_API_KEY`                                              |
+| OpenAI Compatible | `openai-compatible/{model}`     | `OPENAI_COMPATIBLE_API_KEY`<br />`OPENAI_COMPATIBLE_BASE_URL` |
+| OpenRouter        | `openrouter/{provider}/{model}` | `OPENROUTER_API_KEY`                                          |
+| Vercel AI Gateway | `vercel/{provider}/{model}`     | `AI_GATEWAY_API_KEY`                                          |
+
+## Environment Setup
+
+The Superagent guard model is used by default and requires no API keys. Set the appropriate API key environment variable only if you want to use a different provider or need the `redact()` method (which requires a model):
+
+```bash
+# Superagent (optional - for usage tracking only)
+export SUPERAGENT_API_KEY=your-key
+
+# OpenAI
+export OPENAI_API_KEY=sk-...
+
+# OpenAI compatible (Chat Completions)
+export OPENAI_COMPATIBLE_API_KEY=sk-...
+export OPENAI_COMPATIBLE_BASE_URL=https://api.example.com/v1
+export OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUT=true  # optional - set to true if the endpoint supports structured output
+
+# Anthropic
+export ANTHROPIC_API_KEY=sk-ant-...
+
+# Google
+export GOOGLE_API_KEY=...
+
+# Groq
+export GROQ_API_KEY=gsk_...
+
+# Fireworks
+export FIREWORKS_API_KEY=...
+
+# AWS Bedrock
+export AWS_BEDROCK_API_KEY=...
+export AWS_BEDROCK_REGION=us-east-1  # optional
+
+# OpenRouter
+export OPENROUTER_API_KEY=...
+
+# Vercel AI Gateway
+export AI_GATEWAY_API_KEY=...
+```
+
+## Usage Examples
+
+```typescript
+import { createClient } from "safety-agent";
+
+const client = createClient();
+
+// Superagent (default - no API key required)
+await client.guard({
+  input: "user message"
+  // model defaults to superagent/guard-0.6b
+});
+
+// Or specify Superagent model explicitly
+await client.guard({
+  input: "user message",
+  model: "superagent/guard-0.6b"
+});
+
+// OpenAI
+await client.guard({
+  input: "user message",
+  model: "openai/gpt-4o-mini"
+});
+
+// OpenAI Compatible (Chat Completions)
+await client.guard({
+  input: "user message",
+  model: "openai-compatible/my-model"
+});
+
+// Anthropic
+await client.guard({
+  input: "user message",
+  model: "anthropic/claude-3-5-sonnet-20241022"
+});
+
+// Google
+await client.guard({
+  input: "user message",
+  model: "google/gemini-1.5-pro"
+});
+
+// Groq
+await client.guard({
+  input: "user message",
+  model: "groq/llama-3.1-70b-versatile"
+});
+
+// OpenRouter (nested provider/model)
+await client.guard({
+  input: "user message",
+  model: "openrouter/anthropic/claude-3-5-sonnet"
+});
+```
+
+## Vision-Capable Models
+
+For image analysis, use a vision-capable model:
+
+| Provider      | Vision Models                                                            |
+| ------------- | ------------------------------------------------------------------------ |
+| **OpenAI**    | `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-4.1`                        |
+| **Anthropic** | `claude-3-*`, `claude-sonnet-4-*`, `claude-opus-4-*`, `claude-haiku-4-*` |
+| **Google**    | `gemini-*`                                                               |
+
+Other providers (Fireworks, Groq, OpenRouter, Vercel, Bedrock) currently support text-only analysis.
+
+## Choosing a Model
+
+### Default: Superagent Guard Model
+
+The default `superagent/guard-0.6b` model is recommended for most guard use cases:
+
+* **No API keys required** - works out of the box
+* **Low latency** - optimized for fast classification
+* **Proven accuracy** - purpose-trained for safety classification
+* **No cost** - free to use
+
+### Other Models
+
+Consider these factors when selecting a different model:
+
+* **Latency**: Smaller models like `gpt-4o-mini` or `claude-3-haiku` are faster
+* **Accuracy**: Larger models like `gpt-4o` or `claude-3-5-sonnet` may catch more edge cases
+* **Cost**: Varies significantly by provider and model size
+* **Compliance**: Some providers offer data residency or compliance certifications
+
+For guard use cases where you need a different provider, `openai/gpt-4o-mini` or `anthropic/claude-3-haiku-20240307` provide a good balance of speed, accuracy, and cost.
