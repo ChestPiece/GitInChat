@@ -168,6 +168,7 @@ export default function ChatPage() {
               role={message.role}
               content={message.content}
               displayName={userName}
+              parts={message.parts}
               toolInvocations={message.toolInvocations}
             />
           ))

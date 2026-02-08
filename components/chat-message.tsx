@@ -6,12 +6,23 @@ import { Github, User } from 'lucide-react'
 
 import { ChatToolInvocation } from '@/components/chat-tool-invocation'
 
+interface MessagePart {
+  type: string;
+  text?: string;
+  toolName?: string;
+  toolCallId?: string;
+  args?: unknown;
+  result?: unknown;
+  state?: 'call' | 'result' | 'partial-call';
+}
+
 interface ChatMessageProps {
   role: 'user' | 'assistant'
-  content: string
+  content?: string
   avatar?: string
   displayName?: string
-  toolInvocations?: any[]
+  parts?: MessagePart[]
+  toolInvocations?: any[] // Legacy support
 }
 
 export function ChatMessage({
@@ -19,9 +30,24 @@ export function ChatMessage({
   content,
   avatar,
   displayName = 'You',
+  parts,
   toolInvocations,
 }: ChatMessageProps) {
   const isUser = role === 'user'
+
+  // Extract text content from parts if available, otherwise use content prop
+  const textContent = parts 
+    ? parts
+        .filter(part => part.type === 'text')
+        .map(part => part.text || '')
+        .join('')
+    : content || '';
+
+  // Extract tool parts from parts array
+  const toolParts = parts?.filter(part => 
+    part.type === 'tool-invocation' || 
+    part.type.startsWith('tool-')
+  ) || [];
 
   return (
     <div className={cn('flex gap-3 mb-6 relative group', isUser && 'flex-row-reverse')}>
@@ -51,9 +77,9 @@ export function ChatMessage({
           {/* Body */}
           <div className="p-4 text-[#c9d1d9] text-sm overflow-x-auto">
              {/* Text Content */}
-            {content && (
+            {textContent && (
                 <div className="prose prose-invert prose-sm max-w-none whitespace-pre-wrap has-[pre]:bg-[#161b22] has-[pre]:border has-[pre]:border-[#30363d] has-[pre]:rounded-md has-[pre]:p-0">
-                {content.split('```').map((part, index) => {
+                {textContent.split('```').map((part, index) => {
                     if (index % 2 === 1) {
                     return (
                         <div key={index} className="my-3 bg-[#161b22] border border-[#30363d] rounded-md overflow-hidden">
@@ -72,8 +98,26 @@ export function ChatMessage({
                 </div>
             )}
 
-            {/* Tool Invocations */}
-            {toolInvocations && toolInvocations.length > 0 && (
+            {/* Tool Parts from parts array */}
+            {toolParts.length > 0 && (
+                <div className="mt-4 space-y-4 border-t border-[#30363d] pt-4">
+                    {toolParts.map((part, index) => (
+                        <ChatToolInvocation 
+                          key={part.toolCallId || index} 
+                          toolInvocation={{
+                            toolName: part.toolName,
+                            toolCallId: part.toolCallId,
+                            args: part.args,
+                            result: part.result,
+                            state: part.state,
+                          }} 
+                        />
+                    ))}
+                </div>
+            )}
+
+            {/* Legacy Tool Invocations support */}
+            {toolInvocations && toolInvocations.length > 0 && toolParts.length === 0 && (
                 <div className="mt-4 space-y-4 border-t border-[#30363d] pt-4">
                     {toolInvocations.map((toolInvocation) => (
                         <ChatToolInvocation key={toolInvocation.toolCallId} toolInvocation={toolInvocation} />
@@ -86,3 +130,4 @@ export function ChatMessage({
     </div>
   )
 }
+

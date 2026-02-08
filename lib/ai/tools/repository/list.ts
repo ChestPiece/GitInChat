@@ -41,4 +41,4 @@ export const listRepositories = tool({
       };
     }
   },
-} as any);
+});

@@ -124,6 +124,7 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
               role={message.role}
               content={message.content}
               displayName={userName}
+              parts={message.parts}
               toolInvocations={message.toolInvocations}
             />
           ))
