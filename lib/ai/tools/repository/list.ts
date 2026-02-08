@@ -21,21 +21,48 @@ export const listRepositories = tool({
       const allRepos: any[] = [];
       let page = 1;
       const perPage = fetchAll ? 100 : limit;
-      const filterArchived = type === 'archived';
       
+      // Map 'type' to visibility/affiliation for the API call
+      // The GitHub API errors if 'type' is sent with 'visibility' or 'affiliation'.
+      // So we prioritize mapping 'type' to the correct visibility/affiliation params
+      // and DO NOT send 'type' to the API.
+      
+      let apiVisibility: "all" | "public" | "private" | undefined = visibility as any;
+      let apiAffiliation: string | undefined = affiliation;
+
+      if (type) {
+        if (type === 'public') {
+          apiVisibility = 'public';
+        } else if (type === 'private') {
+          apiVisibility = 'private';
+        } else if (type === 'owner') {
+          apiAffiliation = 'owner';
+        } else if (type === 'member') {
+          apiAffiliation = 'organization_member';
+        } 
+        // For 'all', 'forks', 'sources', 'archived', we use the defaults (or user provided visibility/affiliation)
+        // effectively fetching 'all' relative to that scope.
+      }
+
       do {
         const { data } = await octokit.rest.repos.listForAuthenticatedUser({
           sort: sort as "created" | "updated" | "pushed" | "full_name" | undefined,
           direction: direction as "asc" | "desc" | undefined,
           per_page: perPage,
           page,
-          visibility: visibility as "all" | "public" | "private" | undefined,
-          affiliation: affiliation as string | undefined,
-          type: (type && type !== 'archived') ? type as any : undefined,
+          visibility: apiVisibility,
+          affiliation: apiAffiliation,
+          // type: ... DO NOT SEND TYPE
         });
         
         const mapped = data
-          .filter(repo => !filterArchived || repo.archived) // Filter for archived if requested
+          .filter(repo => {
+            if (type === 'forks') return repo.fork === true;
+            if (type === 'sources') return repo.fork === false;
+            // The API returns archived repos by default, but if user explicitly asks for ONLY archived:
+            if (type === 'archived') return repo.archived === true;
+            return true;
+          })
           .map(repo => ({
             name: repo.name,
             full_name: repo.full_name,
