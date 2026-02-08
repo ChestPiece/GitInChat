@@ -15,7 +15,7 @@ export const githubAgent = new ToolLoopAgent({
   model: openai('gpt-4o'),
   instructions: GITHUB_AGENT_SYSTEM_PROMPT,
   tools,
-  stopWhen: stepCountIs(5), // Allow up to 5 steps for multi-tool operations
+  stopWhen: stepCountIs(10), // Allow up to 5 steps for multi-tool operations
 });
 
 /**

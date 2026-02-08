@@ -26,11 +26,25 @@ export async function POST(req: Request) {
     }
   }
 
+  // Transform messages to ensure they have the 'parts' array required by createAgentUIStreamResponse
+  const transformedMessages = messages.map((msg: any) => {
+    // If message already has parts, use it
+    if (msg.parts && Array.isArray(msg.parts)) {
+      return msg;
+    }
+    // Otherwise, convert content to parts format
+    return {
+      ...msg,
+      parts: typeof msg.content === 'string' 
+        ? [{ type: 'text', text: msg.content }] 
+        : msg.content || [],
+    };
+  });
+
   // Use createAgentUIStreamResponse for proper streaming with ToolLoopAgent
-  // Note: Message persistence happens via onStepFinish if needed
   return createAgentUIStreamResponse({
     agent: githubAgent,
-    uiMessages: messages,
+    uiMessages: transformedMessages,
     onStepFinish: async ({ text }) => {
       // Save assistant responses as they complete each step
       if (chatId && text) {
@@ -39,5 +53,6 @@ export async function POST(req: Request) {
     }
   });
 }
+
 
 
