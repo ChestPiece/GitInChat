@@ -11,6 +11,10 @@ const listCommitsSchema = z.object({
   limit: z.number().min(1).max(100).optional().describe('Number of commits to return. Default: 30.'),
 });
 
+import { createSuccess, createError } from '../../utils';
+
+// ... (schema remains)
+
 export const listCommits = tool({
   description: 'List recent commits of a repository. Use this to see commit history.',
   inputSchema: listCommitsSchema,
@@ -26,7 +30,7 @@ export const listCommits = tool({
         per_page: limit,
       });
       
-      return {
+      return createSuccess({
         total: data.length,
         commits: data.map(commit => ({
           sha: commit.sha.substring(0, 7),
@@ -36,12 +40,9 @@ export const listCommits = tool({
           date: commit.commit.author?.date,
           url: commit.html_url,
         })),
-      };
+      });
     } catch (error: any) {
-      return {
-        error: error.message || 'Failed to list commits',
-        status: error.status,
-      };
+      return createError(error.message || 'Failed to list commits');
     }
   },
 });
@@ -64,7 +65,7 @@ export const getCommitDetails = tool({
         ref: sha,
       });
       
-      return {
+      return createSuccess({
         sha: data.sha,
         message: data.commit.message,
         author: {
@@ -86,12 +87,9 @@ export const getCommitDetails = tool({
           deletions: file.deletions,
         })),
         url: data.html_url,
-      };
+      });
     } catch (error: any) {
-      return {
-        error: error.message || 'Failed to get commit details',
-        status: error.status,
-      };
+      return createError(error.message || 'Failed to get commit details');
     }
   },
 });

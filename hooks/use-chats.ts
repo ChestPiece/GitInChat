@@ -1,84 +1,85 @@
-'use client'
+"use client"
 
-import { useCallback, useEffect, useState } from 'react'
-import * as chatsService from '@/lib/services/chats'
+import { useState, useEffect, useCallback } from "react"
+import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
+import { fetchChats, createChat, deleteChat, updateChat, Chat } from "@/lib/services/chats"
 
-export interface Chat {
-  id: string
-  title: string
-  created_at: string
-  updated_at: string
-}
+export type { Chat }
 
 export function useChats() {
   const [chats, setChats] = useState<Chat[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
+  const supabase = createClient()
 
-  const fetchChats = useCallback(async () => {
+  const loadChats = useCallback(async () => {
     try {
       setIsLoading(true)
       setError(null)
-      const data = await chatsService.fetchChats()
+      const data = await fetchChats(supabase)
       setChats(data)
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch chats'
-      setError(message)
+    } catch (error: any) {
+      console.error('Error fetching chats:', error)
+      setError(error.message || 'Failed to fetch chats')
     } finally {
       setIsLoading(false)
     }
-  }, [])
-
-  const createChat = useCallback(
-    async (title: string) => {
-      try {
-        const newChat = await chatsService.createChat(title)
-        setChats((prev) => [newChat, ...prev])
-        return newChat
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to create chat'
-        setError(message)
-        throw err
-      }
-    },
-    [],
-  )
-
-  const deleteChat = useCallback(async (chatId: string) => {
-    try {
-      await chatsService.deleteChat(chatId)
-      setChats((prev) => prev.filter((chat) => chat.id !== chatId))
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to delete chat'
-      setError(message)
-      throw err
-    }
-  }, [])
-
-  const updateChat = useCallback(async (chatId: string, title: string) => {
-    try {
-      const updatedChat = await chatsService.updateChat(chatId, title)
-      setChats((prev) =>
-        prev.map((chat) => (chat.id === chatId ? updatedChat : chat)),
-      )
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to update chat'
-      setError(message)
-      throw err
-    }
-  }, [])
+  }, [supabase])
 
   useEffect(() => {
-    fetchChats()
-  }, [fetchChats])
+    loadChats()
+  }, [loadChats])
+
+  const addChat = useCallback(async (title: string) => {
+    try {
+      setError(null)
+      // We still need to get the user here because the service expects userId
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
+
+      const newChat = await createChat(title, user.id, supabase)
+      setChats((prev) => [newChat, ...prev])
+      return newChat.id
+    } catch (error: any) {
+      console.error('Error creating chat:', error)
+      setError(error.message || 'Failed to create chat')
+      return null
+    }
+  }, [supabase])
+
+  const removeChat = useCallback(async (id: string) => {
+    try {
+      setError(null)
+      await deleteChat(id, supabase)
+      setChats((prev) => prev.filter((chat) => chat.id !== id))
+    } catch (error: any) {
+      console.error('Error deleting chat:', error)
+      setError(error.message || 'Failed to delete chat')
+    }
+  }, [supabase])
+
+  const editChat = useCallback(async (id: string, title: string) => {
+    try {
+      setError(null)
+      await updateChat(id, title, supabase)
+      setChats((prev) => prev.map((chat) => 
+        chat.id === id ? { ...chat, title } : chat
+      ))
+    } catch (error: any) {
+      console.error('Error updating chat:', error)
+      setError(error.message || 'Failed to update chat')
+    }
+  }, [supabase])
 
   return {
     chats,
     isLoading,
     error,
-    fetchChats,
-    createChat,
-    deleteChat,
-    updateChat,
+    addChat,
+    deleteChat: removeChat,
+    updateChat: editChat,
+    refreshChats: loadChats
   }
 }

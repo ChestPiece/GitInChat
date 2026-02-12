@@ -7,6 +7,10 @@ const getLanguagesSchema = z.object({
   repo: z.string().describe('Name of the repository'),
 });
 
+import { createSuccess, createError } from '../../utils';
+
+// ... (schema remains)
+
 export const getLanguages = tool({
   description: 'Get the language breakdown of a repository. Shows bytes per language and percentage.',
   inputSchema: getLanguagesSchema,
@@ -26,15 +30,12 @@ export const getLanguages = tool({
         percentage: ((bytes / totalBytes) * 100).toFixed(1) + '%',
       }));
       
-      return {
+      return createSuccess({
         total_bytes: totalBytes,
         languages,
-      };
+      });
     } catch (error: any) {
-      return {
-        error: error.message || 'Failed to get languages',
-        status: error.status,
-      };
+      return createError(error.message || 'Failed to get languages');
     }
   },
 });

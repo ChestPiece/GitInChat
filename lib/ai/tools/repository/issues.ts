@@ -12,6 +12,10 @@ const listIssuesSchema = z.object({
   limit: z.number().min(1).max(100).optional().describe('Number of issues to return. Default: 30.'),
 });
 
+import { createSuccess, createError } from '../../utils';
+
+// ... (schema remains)
+
 export const listIssues = tool({
   description: 'List issues of a repository. Use this to see open/closed issues.',
   inputSchema: listIssuesSchema,
@@ -31,7 +35,7 @@ export const listIssues = tool({
       // Filter out pull requests (GitHub API returns PRs as issues too)
       const issues = data.filter(issue => !issue.pull_request);
       
-      return {
+      return createSuccess({
         total: issues.length,
         state_filter: state,
         issues: issues.map(issue => ({
@@ -45,12 +49,9 @@ export const listIssues = tool({
           updated_at: issue.updated_at,
           url: issue.html_url,
         })),
-      };
+      });
     } catch (error: any) {
-      return {
-        error: error.message || 'Failed to list issues',
-        status: error.status,
-      };
+      return createError(error.message || 'Failed to list issues');
     }
   },
 });
@@ -73,7 +74,7 @@ export const getIssueDetails = tool({
         issue_number,
       });
       
-      return {
+      return createSuccess({
         number: data.number,
         title: data.title,
         body: data.body?.substring(0, 500) || '',
@@ -87,12 +88,9 @@ export const getIssueDetails = tool({
         updated_at: data.updated_at,
         closed_at: data.closed_at,
         url: data.html_url,
-      };
+      });
     } catch (error: any) {
-      return {
-        error: error.message || 'Failed to get issue details',
-        status: error.status,
-      };
+      return createError(error.message || 'Failed to get issue details');
     }
   },
 });

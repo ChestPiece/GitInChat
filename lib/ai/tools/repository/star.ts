@@ -9,6 +9,10 @@ const starRepositorySchema = z.object({
   action: z.enum(['star', 'unstar']).describe('Action to perform'),
 });
 
+import { createSuccess, createError } from '../../utils';
+
+// ... (schema remains)
+
 export const starRepository = tool({
   description: 'Star or unstar a repository. Use this to star/unstar a repo.',
   inputSchema: starRepositorySchema,
@@ -17,13 +21,13 @@ export const starRepository = tool({
     try {
       if (action === 'star') {
         await octokit.rest.activity.starRepoForAuthenticatedUser({ owner, repo });
-        return { success: true, message: `Starred ${owner}/${repo}` };
+        return createSuccess({ message: `Starred ${owner}/${repo}`, action: 'starred' });
       } else {
         await octokit.rest.activity.unstarRepoForAuthenticatedUser({ owner, repo });
-        return { success: true, message: `Unstarred ${owner}/${repo}` };
+        return createSuccess({ message: `Unstarred ${owner}/${repo}`, action: 'unstarred' });
       }
     } catch (error: any) {
-      return { success: false, error: error.message || `Failed to ${action} repository` };
+      return createError(error.message || `Failed to ${action} repository`);
     }
   },
 });

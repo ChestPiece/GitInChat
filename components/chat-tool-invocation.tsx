@@ -26,9 +26,30 @@ export function ChatToolInvocation({ toolInvocation }: ChatToolInvocationProps) 
     );
   };
 
-  const renderToolResult = (result: any) => {
+  const renderToolResult = (rawResult: any) => {
+    // Handle ToolResult wrapper
+    let result = rawResult;
+    let error: string | undefined;
+
+    if (rawResult && typeof rawResult === 'object' && 'success' in rawResult) {
+        if (!rawResult.success) {
+            error = rawResult.error || 'Unknown error';
+        } else {
+            result = rawResult.data;
+        }
+    }
+
+    if (error) {
+        return (
+            <div className="flex items-center gap-2 text-sm text-red-400 bg-red-950/20 p-2 rounded border border-red-900/50">
+                <X className="w-4 h-4" />
+                <span>Error: {error}</span>
+            </div>
+        )
+    }
+
     if (toolName === 'listRepositories' || toolName === 'searchRepositories') {
-      const repos = Array.isArray(result) ? result : [];
+      const repos = Array.isArray(result) ? result : (result?.repositories || []); // Handle different returns
       return (
         <div className="space-y-2">
           <div className="text-sm font-medium text-gray-400">Found {repos.length} repositories</div>
@@ -59,6 +80,8 @@ export function ChatToolInvocation({ toolInvocation }: ChatToolInvocationProps) 
 
     if (toolName === 'getRepositoryDetails') {
        const repo = result;
+       if (!repo) return <div className="text-gray-500">No repository details</div>;
+       
        return (
         <div className="p-4 bg-[#161b22] border border-[#30363d] rounded-md">
             <div className="flex justify-between items-start">
@@ -82,6 +105,7 @@ export function ChatToolInvocation({ toolInvocation }: ChatToolInvocationProps) 
     }
 
     if (toolName === 'getRepositoryFileContent') {
+        // Error handling is now done above via success check, but keep this for backward compat if tool returns { error } directly
         if (result.error) {
             return <div className="text-red-400 text-sm">Error: {result.error}</div>
         }
@@ -104,7 +128,7 @@ export function ChatToolInvocation({ toolInvocation }: ChatToolInvocationProps) 
         return (
             <div className="flex items-center gap-2 text-sm text-green-400">
                 <Check className="w-4 h-4" />
-                <span>{result.message}</span>
+                <span>{result.message || 'Repository starred successfully'}</span>
             </div>
         )
     }

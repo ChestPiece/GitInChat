@@ -1,69 +1,71 @@
 import { createClient } from '@/lib/supabase/client'
+import { SupabaseClient } from '@supabase/supabase-js'
 
 export interface Chat {
   id: string
-  user_id: string
   title: string
   created_at: string
   updated_at: string
+  user_id: string
 }
 
-export async function fetchChats(): Promise<Chat[]> {
-  const supabase = createClient()
+export async function fetchChats(supabaseClient?: SupabaseClient): Promise<Chat[]> {
+  const supabase = supabaseClient || createClient()
   
   const { data, error } = await supabase
     .from('chats')
     .select('*')
-    .order('created_at', { ascending: false })
+    .order('updated_at', { ascending: false })
   
   if (error) throw error
   return data || []
 }
 
-export async function createChat(title: string): Promise<Chat> {
-  const supabase = createClient()
-  
-  const { data: { user }, error: userError } = await supabase.auth.getUser()
-  if (userError || !user) throw new Error('Not authenticated')
+export async function createChat(
+  title: string, 
+  userId: string,
+  supabaseClient?: SupabaseClient
+): Promise<Chat> {
+  const supabase = supabaseClient || createClient()
   
   const { data, error } = await supabase
     .from('chats')
     .insert({ 
-      user_id: user.id,
-      title,
-      updated_at: new Date().toISOString()
+      title, 
+      user_id: userId 
     })
     .select()
     .single()
-  
+
   if (error) throw error
   return data
 }
 
-export async function updateChat(chatId: string, title: string): Promise<Chat> {
-  const supabase = createClient()
+export async function updateChat(
+  id: string, 
+  title: string,
+  supabaseClient?: SupabaseClient
+): Promise<void> {
+  const supabase = supabaseClient || createClient()
   
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('chats')
-    .update({ 
-      title,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', chatId)
-    .select()
-    .single()
-  
+    .update({ title })
+    .eq('id', id)
+
   if (error) throw error
-  return data
 }
 
-export async function deleteChat(chatId: string): Promise<void> {
-  const supabase = createClient()
+export async function deleteChat(
+  id: string,
+  supabaseClient?: SupabaseClient
+): Promise<void> {
+  const supabase = supabaseClient || createClient()
   
   const { error } = await supabase
     .from('chats')
     .delete()
-    .eq('id', chatId)
-  
+    .eq('id', id)
+
   if (error) throw error
 }

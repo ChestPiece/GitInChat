@@ -8,6 +8,10 @@ const listTagsSchema = z.object({
   limit: z.number().min(1).max(100).optional().describe('Number of tags to return. Default: 30.'),
 });
 
+import { createSuccess, createError } from '../../utils';
+
+// ... (schema remains)
+
 export const listTags = tool({
   description: 'List git tags of a repository. Use this to see version tags.',
   inputSchema: listTagsSchema,
@@ -20,7 +24,7 @@ export const listTags = tool({
         per_page: limit,
       });
       
-      return {
+      return createSuccess({
         total: data.length,
         tags: data.map(tag => ({
           name: tag.name,
@@ -29,12 +33,9 @@ export const listTags = tool({
           tarball_url: tag.tarball_url,
           zipball_url: tag.zipball_url,
         })),
-      };
+      });
     } catch (error: any) {
-      return {
-        error: error.message || 'Failed to list tags',
-        status: error.status,
-      };
+      return createError(error.message || 'Failed to list tags');
     }
   },
 });

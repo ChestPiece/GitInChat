@@ -1,13 +1,14 @@
 
 import { listRepositories } from './repository/list';
 import { countRepositories } from './repository/count';
-import { searchRepositories } from './repository/search';
-import { getRepositoryDetails } from './repository/get-details';
+import { searchRepositoriesTool } from './repository/search-repositories';
+import { getRepositoryTool } from './repository/get-repository';
 import { getRepositoryFileContent } from './repository/get-content';
 import { starRepository } from './repository/star';
-import { createRepository } from './repository/create';
-import { updateRepository } from './repository/update';
-import { deleteRepository } from './repository/delete';
+import { createRepositoryTool } from './repository/create-repository';
+import { updateRepositoryTool } from './repository/update-repository';
+import { deleteRepositoryTool } from './repository/delete-repository';
+import { archiveRepositoryTool } from './repository/archive-repository';
 import { listBranches, getBranchDetails } from './repository/branches';
 import { listCommits, getCommitDetails } from './repository/commits';
 import { listContributors } from './repository/contributors';
@@ -18,19 +19,20 @@ import { listReleases, getReleaseDetails } from './repository/releases';
 import { listTags } from './repository/tags';
 
 export const tools = {
-  // Repository listing & search
+  // Discovery (Read-only)
   listRepositories,
   countRepositories,
-  searchRepositories,
-  getRepositoryDetails,
+  getRepository: getRepositoryTool,
+  searchRepositories: searchRepositoriesTool,
   getRepositoryFileContent,
   getLanguages,
   
-  // Repository actions
+  // Management (Write operations)
+  createRepository: createRepositoryTool,
+  updateRepository: updateRepositoryTool,
+  archiveRepository: archiveRepositoryTool,
+  deleteRepository: deleteRepositoryTool,
   starRepository,
-  createRepository,
-  updateRepository,
-  deleteRepository,
   
   // Branches
   listBranches,
@@ -56,5 +58,3 @@ export const tools = {
   getReleaseDetails,
   listTags,
 };
-
-

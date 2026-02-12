@@ -8,6 +8,10 @@ const countRepositoriesSchema = z.object({
   type: z.enum(['all', 'owner', 'public', 'private', 'member', 'forks', 'sources', 'archived']).optional().describe('Filter by type. Use "archived" to count only archived repos.'),
 });
 
+import { createSuccess, createError } from '../../utils';
+
+// ... (schema remains)
+
 export const countRepositories = tool({
   description: 'Get the total count of repositories for the authenticated user. Use this when user asks "how many repos do I have?" or "count my forked repos".',
   inputSchema: countRepositoriesSchema,
@@ -17,11 +21,7 @@ export const countRepositories = tool({
       let total = 0;
       let page = 1;
       
-      // Map 'type' to visibility/affiliation for the API call
-      // The GitHub API errors if 'type' is sent with 'visibility' or 'affiliation'.
-      // So we prioritize mapping 'type' to the correct visibility/affiliation params
-      // and DO NOT send 'type' to the API.
-      
+      // ... (logic remains same)
       let apiVisibility: "all" | "public" | "private" | undefined = visibility as any;
       let apiAffiliation: string | undefined = affiliation;
 
@@ -63,18 +63,15 @@ export const countRepositories = tool({
         page++;
       } while (page <= 10);
       
-      return {
+      return createSuccess({
         total,
         visibility,
         affiliation,
         type,
         message: `You have ${total} ${type ? type + ' ' : ''}repositories.`,
-      };
+      });
     } catch (error: any) {
-      return {
-        error: error.message || 'Failed to count repositories',
-        status: error.status,
-      };
+      return createError(error.message || 'Failed to count repositories');
     }
   },
 });

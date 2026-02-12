@@ -3,13 +3,13 @@ import { generateText, tool } from 'ai';
 import * as dotenv from 'dotenv';
 import * as readline from 'readline';
 import { listRepositories } from '../lib/ai/tools/repository/list';
-import { searchRepositories } from '../lib/ai/tools/repository/search';
-import { getRepositoryDetails } from '../lib/ai/tools/repository/get-details';
+import { searchRepositoriesTool as searchRepositories } from '../lib/ai/tools/repository/search-repositories';
+import { getRepositoryTool as getRepositoryDetails } from '../lib/ai/tools/repository/get-repository';
 import { getRepositoryFileContent } from '../lib/ai/tools/repository/get-content';
 import { starRepository } from '../lib/ai/tools/repository/star';
-import { createRepository } from '../lib/ai/tools/repository/create';
-import { updateRepository } from '../lib/ai/tools/repository/update';
-import { deleteRepository } from '../lib/ai/tools/repository/delete';
+import { createRepositoryTool as createRepository } from '../lib/ai/tools/repository/create-repository';
+import { updateRepositoryTool as updateRepository } from '../lib/ai/tools/repository/update-repository';
+import { deleteRepositoryTool as deleteRepository } from '../lib/ai/tools/repository/delete-repository';
 
 // Load environment variables
 dotenv.config({ path: '.env.local' });
@@ -49,19 +49,22 @@ async function chat() {
           prompt: input,
           tools: tools,
           maxSteps: 5, // Allow multi-step tool calls
-        });
+        } as any);
 
         if (toolCalls && toolCalls.length > 0) {
           console.log('\n[Tool Calls]:');
           toolCalls.forEach(call => {
-            console.log(`- ${call.toolName}(${JSON.stringify(call.args)})`);
+            const c = call as any;
+            console.log(`- ${c.toolName}(${JSON.stringify(c.args)})`);
           });
         }
 
         if (toolResults && toolResults.length > 0) {
            console.log('\n[Tool Results]:');
            toolResults.forEach(result => {
-             console.log(`- ${result.toolName}: ${JSON.stringify(result.result).substring(0, 100)}...`);
+             // Cast result to any to access properties safely
+             const res = result as any;
+             console.log(`- ${result.toolName}: ${JSON.stringify(res.result).substring(0, 100)}...`);
            });
         }
 

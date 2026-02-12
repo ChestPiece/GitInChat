@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, use } from 'react'
 import { ChatMessage } from '@/components/chat-message'
 import { ChatInput } from '@/components/chat-input'
+import { ChatEmptyState } from '@/components/chat-empty-state'
 import { getUser } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
 import { useChat } from '@ai-sdk/react'
@@ -26,7 +27,7 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
   const [isInitialLoading, setIsInitialLoading] = useState(true)
 
   const { messages, sendMessage, status, setMessages } = useChat({
-    api: '/api/chat',
+    // api: '/api/chat',
     body: { chatId: id },
     initialMessages: initialMessages,
     onError: (error: Error) => {
@@ -35,7 +36,7 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
     onFinish: () => {
         // Optional: Trigger a router refresh or other side effect if needed
     }
-  } as any) as any;
+  } as any);
 
   const isLoading = status === 'submitted' || status === 'streaming';
 
@@ -93,7 +94,7 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
           await sendMessage({
               role: 'user',
               content: content,
-          });
+          } as any);
       } catch (error: any) {
          console.error("Error creating message", error);
          toast.error("Failed to prevent message");
@@ -114,9 +115,10 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
     <>
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
         {messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-[#8b949e]">No messages yet. Start the conversation!</div>
-          </div>
+          <ChatEmptyState 
+            title="No messages yet"
+            description="Start the conversation!"
+          />
         ) : (
           messages.map((message: any) => (
             <ChatMessage

@@ -74,27 +74,27 @@ export function ChatInput({
 
   return (
     <div className="w-full">
-      <div className="border border-[#30363d] rounded-md bg-[#0d1117] overflow-hidden">
+      <div className="border border-border rounded-md bg-background overflow-hidden">
         {/* Header Tabs */}
         <Tabs defaultValue="write" className="w-full">
-          <div className="bg-[#0d1117] border-b border-[#30363d] px-2 pt-2">
+          <div className="bg-background border-b border-border px-2 pt-2">
             <TabsList className="bg-transparent h-auto p-0 gap-1">
               <TabsTrigger 
                 value="write" 
-                className="data-[state=active]:bg-[#161b22] data-[state=active]:text-[#c9d1d9] data-[state=active]:border-[#30363d] data-[state=active]:border-b-transparent border border-transparent rounded-t-md px-4 py-2 text-sm font-medium text-[#c9d1d9] hover:text-[#58a6ff]"
+                className="data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:border-border data-[state=active]:border-b-transparent border border-transparent rounded-t-md px-4 py-2 text-sm font-medium text-foreground hover:text-blue-500"
               >
                 Write
               </TabsTrigger>
               <TabsTrigger 
                 value="preview" 
-                className="data-[state=active]:bg-[#161b22] data-[state=active]:text-[#c9d1d9] data-[state=active]:border-[#30363d] data-[state=active]:border-b-transparent border border-transparent rounded-t-md px-4 py-2 text-sm font-medium text-[#c9d1d9] hover:text-[#58a6ff]"
+                className="data-[state=active]:bg-muted data-[state=active]:text-foreground data-[state=active]:border-border data-[state=active]:border-b-transparent border border-transparent rounded-t-md px-4 py-2 text-sm font-medium text-foreground hover:text-blue-500"
               >
                 Preview
               </TabsTrigger>
             </TabsList>
           </div>
 
-          <TabsContent value="write" className="p-2 m-0 bg-[#0d1117]">
+          <TabsContent value="write" className="p-2 m-0 bg-background">
              <Textarea
               ref={textareaRef}
               value={message}
@@ -102,22 +102,22 @@ export function ChatInput({
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
               disabled={disabled}
-              className="w-full min-h-[100px] bg-[#0d1117] border border-[#30363d] text-[#c9d1d9] placeholder:text-[#8b949e] focus:border-[#58a6ff] focus:ring-1 focus:ring-[#58a6ff] rounded-md p-3 text-sm font-mono resize-y"
+              className="w-full min-h-[100px] bg-background border border-border text-foreground placeholder:text-muted-foreground focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-md p-3 text-sm font-mono resize-y"
             />
             <div className="flex items-center justify-between mt-2 px-1">
-               <div className="flex items-center text-xs text-[#8b949e]">
+               <div className="flex items-center text-xs text-muted-foreground">
                  <Paperclip className="w-4 h-4 mr-1" />
                  <span>Attach files by dragging & dropping, selecting or pasting them.</span>
                </div>
                {/* Markdown hint */}
-               <a href="#" className="hidden sm:block text-xs text-[#8b949e] hover:text-[#58a6ff]">
+               <a href="#" className="hidden sm:block text-xs text-muted-foreground hover:text-blue-500">
                  <svg className="w-4 h-4 inline-block mr-1 align-sub" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M14.85 3H1.15C.52 3 0 3.52 0 4.15v7.69C0 12.48.52 13 1.15 13h13.69c.64 0 1.15-.52 1.15-1.15V4.15C16 3.52 15.48 3 14.85 3zM9 11H7V8L5.5 9.92 4 8v3H2V5h2l1.5 2L7 5h2v6zm2.99.5L9.5 8H11V5h2v3h1.5l-2.51 3.5z"></path></svg>
                  Markdown supported
                </a>
             </div>
           </TabsContent>
 
-          <TabsContent value="preview" className="p-4 m-0 min-h-[140px] text-[#c9d1d9] prose prose-invert prose-sm max-w-none">
+          <TabsContent value="preview" className="p-4 m-0 min-h-[140px] text-foreground prose prose-invert prose-sm max-w-none">
              {message ? (
                <div className="whitespace-pre-wrap">{message}</div>
              ) : (
@@ -127,10 +127,10 @@ export function ChatInput({
         </Tabs>
 
         {/* Footer Actions */}
-        <div className="flex justify-between items-center p-2 border-t border-[#30363d] bg-[#161b22]">
-           <div className="hidden sm:flex items-center text-xs text-[#8b949e] px-2 select-none">
-             <span className="border border-[#30363d] rounded px-1.5 py-0.5 bg-[#0d1117] mr-1 text-[10px] font-mono">⌘</span>
-             <span className="border border-[#30363d] rounded px-1.5 py-0.5 bg-[#0d1117] mr-2 text-[10px] font-mono">Enter</span>
+        <div className="flex justify-between items-center p-2 border-t border-border bg-muted">
+           <div className="hidden sm:flex items-center text-xs text-muted-foreground px-2 select-none">
+             <span className="border border-border rounded px-1.5 py-0.5 bg-background mr-1 text-[10px] font-mono">⌘</span>
+             <span className="border border-border rounded px-1.5 py-0.5 bg-background mr-2 text-[10px] font-mono">Enter</span>
              to submit
            </div>
            <Button

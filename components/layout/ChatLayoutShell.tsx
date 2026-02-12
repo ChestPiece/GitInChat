@@ -15,15 +15,17 @@ interface ChatLayoutShellProps {
 export function ChatLayoutShell({ children, user }: ChatLayoutShellProps) {
   const router = useRouter()
   const pathname = usePathname()
-  const { chats, createChat, deleteChat, updateChat } = useChats()
+  const { chats, addChat, deleteChat, updateChat } = useChats()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 
   const handleNewChat = async () => {
     try {
-      const newChat = await createChat('New Chat')
-      router.push(`/chat/${newChat.id}`)
-      setIsMobileMenuOpen(false)
+      const newChatId = await addChat('New Chat')
+      if (newChatId) {
+        router.push(`/chat/${newChatId}`)
+        setIsMobileMenuOpen(false)
+      }
     } catch (error) {
       console.error('Failed to create new chat:', error)
     }

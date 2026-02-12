@@ -11,6 +11,10 @@ const listPullRequestsSchema = z.object({
   limit: z.number().min(1).max(100).optional().describe('Number of PRs to return. Default: 30.'),
 });
 
+import { createSuccess, createError } from '../../utils';
+
+// ... (schema remains)
+
 export const listPullRequests = tool({
   description: 'List pull requests of a repository. Use this to see open/closed/merged PRs.',
   inputSchema: listPullRequestsSchema,
@@ -26,7 +30,7 @@ export const listPullRequests = tool({
         per_page: limit,
       });
       
-      return {
+      return createSuccess({
         total: data.length,
         state_filter: state,
         pull_requests: data.map(pr => ({
@@ -42,12 +46,9 @@ export const listPullRequests = tool({
           merged_at: pr.merged_at,
           url: pr.html_url,
         })),
-      };
+      });
     } catch (error: any) {
-      return {
-        error: error.message || 'Failed to list pull requests',
-        status: error.status,
-      };
+      return createError(error.message || 'Failed to list pull requests');
     }
   },
 });
@@ -70,7 +71,7 @@ export const getPullRequestDetails = tool({
         pull_number,
       });
       
-      return {
+      return createSuccess({
         number: data.number,
         title: data.title,
         body: data.body?.substring(0, 500) || '',
@@ -90,12 +91,9 @@ export const getPullRequestDetails = tool({
         merged_at: data.merged_at,
         merged_by: data.merged_by?.login,
         url: data.html_url,
-      };
+      });
     } catch (error: any) {
-      return {
-        error: error.message || 'Failed to get pull request details',
-        status: error.status,
-      };
+      return createError(error.message || 'Failed to get pull request details');
     }
   },
 });

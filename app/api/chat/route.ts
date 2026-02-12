@@ -17,12 +17,26 @@ export async function POST(req: Request) {
 
   // Save the user's message
   if (chatId && messages.length > 0) {
+    // Verify chat ownership if chatId is provided
+    if (chatId) {
+      const { data: chat, error } = await supabase
+        .from('chats')
+        .select('user_id')
+        .eq('id', chatId)
+        .single();
+      
+      const user = session?.user;
+      if (error || !chat || !user || chat.user_id !== user.id) {
+         return new Response('Forbidden: You do not have access to this chat', { status: 403 });
+      }
+    }
+
     const lastMessage = messages[messages.length - 1];
     if (lastMessage.role === 'user') {
       const content = typeof lastMessage.content === 'string' 
         ? lastMessage.content 
         : lastMessage.parts?.find((p: any) => p.type === 'text')?.text || '';
-      await messagesService.createMessage(chatId, 'user', content);
+      await messagesService.createMessage(chatId, 'user', content, supabase);
     }
   }
 
@@ -48,7 +62,7 @@ export async function POST(req: Request) {
     onStepFinish: async ({ text }) => {
       // Save assistant responses as they complete each step
       if (chatId && text) {
-        await messagesService.createMessage(chatId, 'assistant', text);
+        await messagesService.createMessage(chatId, 'assistant', text, supabase);
       }
     }
   });

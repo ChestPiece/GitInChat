@@ -8,6 +8,10 @@ const listReleasesSchema = z.object({
   limit: z.number().min(1).max(100).optional().describe('Number of releases to return. Default: 30.'),
 });
 
+import { createSuccess, createError } from '../../utils';
+
+// ... (schema remains)
+
 export const listReleases = tool({
   description: 'List releases of a repository. Use this to see published versions and their details.',
   inputSchema: listReleasesSchema,
@@ -20,7 +24,7 @@ export const listReleases = tool({
         per_page: limit,
       });
       
-      return {
+      return createSuccess({
         total: data.length,
         releases: data.map(release => ({
           id: release.id,
@@ -35,12 +39,9 @@ export const listReleases = tool({
           html_url: release.html_url,
           assets_count: release.assets?.length || 0,
         })),
-      };
+      });
     } catch (error: any) {
-      return {
-        error: error.message || 'Failed to list releases',
-        status: error.status,
-      };
+      return createError(error.message || 'Failed to list releases');
     }
   },
 });
@@ -71,7 +72,7 @@ export const getReleaseDetails = tool({
         data = response.data;
       }
       
-      return {
+      return createSuccess({
         id: data.id,
         tag_name: data.tag_name,
         name: data.name,
@@ -90,15 +91,12 @@ export const getReleaseDetails = tool({
           download_count: asset.download_count,
           download_url: asset.browser_download_url,
         })),
-      };
+      });
     } catch (error: any) {
       if (error.status === 404) {
-        return { error: 'No releases found for this repository', status: 404 };
+        return createError('No releases found for this repository');
       }
-      return {
-        error: error.message || 'Failed to get release details',
-        status: error.status,
-      };
+      return createError(error.message || 'Failed to get release details');
     }
   },
 });

@@ -12,6 +12,10 @@ const listRepositoriesSchema = z.object({
   type: z.enum(['all', 'owner', 'public', 'private', 'member', 'forks', 'sources', 'archived']).optional().describe('Filter by type. Use "archived" to list only archived repos.'),
 });
 
+import { createSuccess, createError } from '../../utils';
+
+// ... (schema remains)
+
 export const listRepositories = tool({
   description: 'List repositories of the authenticated user. IMPORTANT: When user asks for "all repos" or "show me everything", set fetchAll=true. To list ARCHIVED repos, set type="archived".',
   inputSchema: listRepositoriesSchema,
@@ -22,11 +26,7 @@ export const listRepositories = tool({
       let page = 1;
       const perPage = fetchAll ? 100 : limit;
       
-      // Map 'type' to visibility/affiliation for the API call
-      // The GitHub API errors if 'type' is sent with 'visibility' or 'affiliation'.
-      // So we prioritize mapping 'type' to the correct visibility/affiliation params
-      // and DO NOT send 'type' to the API.
-      
+      // ... (logic remains same)
       let apiVisibility: "all" | "public" | "private" | undefined = visibility as any;
       let apiAffiliation: string | undefined = affiliation;
 
@@ -40,8 +40,6 @@ export const listRepositories = tool({
         } else if (type === 'member') {
           apiAffiliation = 'organization_member';
         } 
-        // For 'all', 'forks', 'sources', 'archived', we use the defaults (or user provided visibility/affiliation)
-        // effectively fetching 'all' relative to that scope.
       }
 
       do {
@@ -52,14 +50,12 @@ export const listRepositories = tool({
           page,
           visibility: apiVisibility,
           affiliation: apiAffiliation,
-          // type: ... DO NOT SEND TYPE
         });
         
         const mapped = data
           .filter(repo => {
             if (type === 'forks') return repo.fork === true;
             if (type === 'sources') return repo.fork === false;
-            // The API returns archived repos by default, but if user explicitly asks for ONLY archived:
             if (type === 'archived') return repo.archived === true;
             return true;
           })
@@ -79,21 +75,17 @@ export const listRepositories = tool({
         
         allRepos.push(...mapped);
         
-        // If not fetching all, or we got fewer than requested, stop
         if (!fetchAll || data.length < perPage) break;
         page++;
-      } while (fetchAll && page <= 10); // Safety limit of 1000 repos
+      } while (fetchAll && page <= 10);
       
-      return {
+      return createSuccess({
         total: allRepos.length,
         filter: type || 'all',
         repositories: allRepos,
-      };
+      });
     } catch (error: any) {
-      return {
-        error: error.message || 'Failed to list repositories',
-        status: error.status,
-      };
+      return createError(error.message || 'Failed to list repositories');
     }
   },
 });

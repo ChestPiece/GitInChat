@@ -9,6 +9,10 @@ const listBranchesSchema = z.object({
   limit: z.number().min(1).max(100).optional().describe('Number of branches to return. Default: 30.'),
 });
 
+import { createSuccess, createError } from '../../utils';
+
+// ... (schema remains)
+
 export const listBranches = tool({
   description: 'List all branches of a repository. Use this to see what branches exist in a repo.',
   inputSchema: listBranchesSchema,
@@ -22,19 +26,16 @@ export const listBranches = tool({
         per_page: limit,
       });
       
-      return {
+      return createSuccess({
         total: data.length,
         branches: data.map(branch => ({
           name: branch.name,
           protected: branch.protected,
           commit_sha: branch.commit.sha,
         })),
-      };
+      });
     } catch (error: any) {
-      return {
-        error: error.message || 'Failed to list branches',
-        status: error.status,
-      };
+      return createError(error.message || 'Failed to list branches');
     }
   },
 });
@@ -57,7 +58,7 @@ export const getBranchDetails = tool({
         branch,
       });
       
-      return {
+      return createSuccess({
         name: data.name,
         protected: data.protected,
         commit: {
@@ -67,12 +68,9 @@ export const getBranchDetails = tool({
           date: data.commit.commit.author?.date,
         },
         protection_url: data.protection_url,
-      };
+      });
     } catch (error: any) {
-      return {
-        error: error.message || 'Failed to get branch details',
-        status: error.status,
-      };
+      return createError(error.message || 'Failed to get branch details');
     }
   },
 });

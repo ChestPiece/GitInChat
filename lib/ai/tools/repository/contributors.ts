@@ -8,6 +8,10 @@ const listContributorsSchema = z.object({
   limit: z.number().min(1).max(100).optional().describe('Number of contributors to return. Default: 30.'),
 });
 
+import { createSuccess, createError } from '../../utils';
+
+// ... (schema remains)
+
 export const listContributors = tool({
   description: 'List contributors to a repository with their commit counts. Use this to see who has contributed.',
   inputSchema: listContributorsSchema,
@@ -20,7 +24,7 @@ export const listContributors = tool({
         per_page: limit,
       });
       
-      return {
+      return createSuccess({
         total: data.length,
         contributors: data.map(contributor => ({
           username: contributor.login,
@@ -28,12 +32,9 @@ export const listContributors = tool({
           avatar_url: contributor.avatar_url,
           profile_url: contributor.html_url,
         })),
-      };
+      });
     } catch (error: any) {
-      return {
-        error: error.message || 'Failed to list contributors',
-        status: error.status,
-      };
+      return createError(error.message || 'Failed to list contributors');
     }
   },
 });

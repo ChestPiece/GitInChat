@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
+import { SupabaseClient } from '@supabase/supabase-js'
 
 export interface Message {
   id: string
@@ -8,8 +9,8 @@ export interface Message {
   created_at: string
 }
 
-export async function fetchMessages(chatId: string): Promise<Message[]> {
-  const supabase = createClient()
+export async function fetchMessages(chatId: string, supabaseClient?: SupabaseClient): Promise<Message[]> {
+  const supabase = supabaseClient || createClient()
   
   const { data, error } = await supabase
     .from('messages')
@@ -24,9 +25,10 @@ export async function fetchMessages(chatId: string): Promise<Message[]> {
 export async function createMessage(
   chatId: string,
   role: 'user' | 'assistant',
-  content: string
+  content: string,
+  supabaseClient?: SupabaseClient
 ): Promise<Message> {
-  const supabase = createClient()
+  const supabase = supabaseClient || createClient()
   
   const { data, error } = await supabase
     .from('messages')
