@@ -17,6 +17,7 @@ import { listPullRequests, getPullRequestDetails } from './repository/pull-reque
 import { getLanguages } from './repository/languages';
 import { listReleases, getReleaseDetails } from './repository/releases';
 import { listTags } from './repository/tags';
+import { scanRepository } from './repository/scan';
 
 export const tools = {
   // Discovery (Read-only)
@@ -57,4 +58,7 @@ export const tools = {
   listReleases,
   getReleaseDetails,
   listTags,
+
+  // Security
+  scanRepository,
 };

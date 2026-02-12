@@ -15,6 +15,50 @@ export async function POST(req: Request) {
     return new Response('Unauthorized', { status: 401 });
   }
 
+  // 🛡️ Safety Guard (Fail-Open)
+  // We check the LAST message for malicious intent.
+  try {
+    const lastMessage = messages[messages.length - 1];
+    const content = typeof lastMessage.content === 'string' 
+      ? lastMessage.content 
+      : lastMessage.parts?.find((p: any) => p.type === 'text')?.text || '';
+
+    // Only scan if there is text content
+    if (content) {
+      const { safetyClient, GITHUB_AGENT_SAFETY_PROMPT } = await import('@/lib/ai/safety');
+      
+      // Race: Safety Check vs Timeout (800ms)
+      // If check is slow, we proceed (fail open) to avoid lag.
+      
+      // Race: Safety Check vs Timeout (800ms)
+      // If check is slow, we proceed (fail open) to avoid lag.
+      const safetyCheckPromise = safetyClient.guard({ 
+        input: content, 
+        systemPrompt: GITHUB_AGENT_SAFETY_PROMPT 
+      });
+
+      const timeoutPromise = new Promise<{ timeout: true }>((resolve) => 
+        setTimeout(() => resolve({ timeout: true }), 800)
+      );
+
+      const result = await Promise.race([safetyCheckPromise, timeoutPromise]);
+
+      if ('classification' in result && result.classification === 'block') {
+         console.warn("[Safety Guard] Blocked:", result.violation_types);
+         return new Response(JSON.stringify({
+           error: "Request blocked by safety policy.",
+           code: "safety_violation",
+           details: result.violation_types 
+         }), { status: 400 });
+      } else if ('timeout' in result) {
+         console.warn("[Safety Guard] Timeout - Proceeding (Fail Open)");
+      }
+    }
+  } catch (error) {
+    // Fail Open: Log error but allow request to proceed
+    console.error("[Safety Guard] Check Error (Proceeding):", error);
+  }
+
   // Save the user's message
   if (chatId && messages.length > 0) {
     // Verify chat ownership if chatId is provided
