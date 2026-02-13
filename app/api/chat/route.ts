@@ -77,10 +77,17 @@ export async function POST(req: Request) {
 
     const lastMessage = messages[messages.length - 1];
     if (lastMessage.role === 'user') {
+      const { redactContent } = await import('@/lib/ai/redaction');
+      
       const content = typeof lastMessage.content === 'string' 
         ? lastMessage.content 
         : lastMessage.parts?.find((p: any) => p.type === 'text')?.text || '';
-      await messagesService.createMessage(chatId, 'user', content, supabase);
+
+      // Redact PII before saving to history (Privacy)
+      // The LLM still gets the raw message (in 'messages' array below) for full context.
+      const { redacted } = await redactContent(content);
+      
+      await messagesService.createMessage(chatId, 'user', redacted, supabase);
     }
   }
 
