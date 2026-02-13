@@ -1,6 +1,6 @@
 'use server';
 
-import { safetyClient } from '../../lib/ai/safety';
+import { safetyClient } from '@/lib/safety';
 
 interface GuardFileResult {
   success: boolean;

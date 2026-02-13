@@ -19,6 +19,8 @@ import { listReleases, getReleaseDetails } from './repository/releases';
 import { listTags } from './repository/tags';
 import { scanRepository } from './repository/scan';
 import { getRecentEventsTool } from './github-events';
+import { searchCodebaseTool } from './search-codebase';
+import { readProjectFileTool } from './read-file';
 
 export const tools = {
   // Discovery (Read-only)
@@ -65,4 +67,8 @@ export const tools = {
 
   // Events
   getRecentEvents: getRecentEventsTool,
+
+  // Knowledge
+  searchCodebase: searchCodebaseTool,
+  readProjectFile: readProjectFileTool,
 };

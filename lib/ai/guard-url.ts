@@ -1,4 +1,4 @@
-import { safetyClient } from './safety';
+import { safetyClient } from '@/lib/safety';
 
 interface GuardUrlResult {
   allowed: boolean;

@@ -124,6 +124,53 @@ export function ChatToolInvocation({ toolInvocation }: ChatToolInvocationProps) 
         )
     }
 
+
+
+    if (toolName === 'searchCodebase') {
+      const isString = typeof result === 'string';
+      const content = isString ? result : JSON.stringify(result, null, 2);
+      
+      // If result is the "No results" message
+      if (content.includes("No relevant code found")) {
+         return (
+             <div className="flex items-center gap-2 text-sm text-yellow-500 bg-yellow-950/20 p-2 rounded border border-yellow-900/50">
+                 <span className="font-semibold">No results found.</span>
+             </div>
+         )
+      }
+
+      return (
+        <div className="space-y-2">
+           <div className="flex items-center gap-2 text-sm text-gray-400 px-2 pb-1 border-b border-[#30363d]">
+               <FileCode className="w-4 h-4" />
+               <span>Codebase Search Results</span>
+           </div>
+           <div className="bg-[#0d1117] border border-[#30363d] rounded-md p-3 overflow-x-auto text-xs font-mono text-gray-300 whitespace-pre-wrap max-h-[400px] overflow-y-auto custom-scrollbar">
+              {content}
+           </div>
+        </div>
+      )
+    }
+
+    if (toolName === 'readProjectFile') {
+       if (result.error) {
+           return <div className="text-red-400 text-sm">Error: {result.error}</div>
+       }
+       return (
+           <div className="space-y-2">
+               <div className="flex items-center justify-between text-xs text-gray-400 px-2">
+                  <div className="flex items-center gap-1"><FileCode className="w-4 h-4"/> File Content: {toolInvocation.args.filePath}</div>
+                  {result.truncated && <span className="text-yellow-500">(Truncated)</span>}
+               </div>
+               <div className="bg-[#0d1117] border border-[#30363d] rounded-md p-3 overflow-x-auto max-h-[500px] overflow-y-auto custom-scrollbar">
+                   <pre className="text-xs font-mono text-gray-300">
+                       {result.content}
+                   </pre>
+               </div>
+           </div>
+       )
+    }
+
     if (toolName === 'starRepository') {
         return (
             <div className="flex items-center gap-2 text-sm text-green-400">

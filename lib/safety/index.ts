@@ -102,7 +102,8 @@ export async function validateMessageSafety(messages: any[]): Promise<Response |
       // If check is slow, we proceed (fail open) to avoid lag.
       const safetyCheckPromise = safetyClient.guard({ 
         input: content, 
-        systemPrompt: GITHUB_AGENT_SAFETY_PROMPT 
+        systemPrompt: GITHUB_AGENT_SAFETY_PROMPT,
+        model: 'openai/gpt-4o-mini'
       });
 
       const timeoutPromise = new Promise<{ timeout: true }>((resolve) => 
