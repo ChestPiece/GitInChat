@@ -65,14 +65,17 @@ export function Header({ user, onMenuClick }: HeaderProps) {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 ml-1 ring-2 ring-transparent bg-transparent p-0 overflow-hidden hover:ring-[#30363d]">
+            <div className="flex items-center gap-2 hover:bg-[#1f2428] rounded-full pr-3 pl-1 py-1 transition-colors cursor-pointer border border-transparent hover:border-[#30363d]">
               <Avatar className="h-8 w-8">
                 <AvatarImage src={user?.image} alt={user?.name} />
                 <AvatarFallback className="bg-[#238636] text-white">
                   {user?.name?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
-            </Button>
+              <span className="hidden lg:block text-sm font-medium text-white max-w-[100px] truncate">
+                {user?.name}
+              </span>
+            </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 bg-[#161b22] border-[#30363d] text-[#c9d1d9] mt-2">
             <DropdownMenuLabel className="font-normal">

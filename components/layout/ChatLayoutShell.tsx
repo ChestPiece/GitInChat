@@ -59,9 +59,9 @@ export function ChatLayoutShell({ children, user }: ChatLayoutShellProps) {
   }))
 
   const headerUser = {
-    name: user?.user_metadata?.full_name || user?.email?.split('@')[0],
+    name: user?.name || user?.email?.split('@')[0],
     email: user?.email,
-    image: user?.user_metadata?.avatar_url
+    image: user?.avatar
   }
 
   return (

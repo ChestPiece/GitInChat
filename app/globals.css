@@ -55,49 +55,50 @@ body {
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
   .dark {
-    /* GitHub Dark (Default/Dimmed hybrid) */
-    --background: 218 25% 7%; /* #0d1117 */
-    --foreground: 212 12% 82%; /* #c9d1d9 */
+    /* GitHub Dark Dimmed Palette */
+    --background: 216 28% 7%; /* #0d1117 Main Canvas */
+    --foreground: 210 12% 93%; /* #e6edf3 Main Text */
 
-    --card: 215 21% 11%; /* #161b22 */
-    --card-foreground: 212 12% 82%;
+    --card: 215 21% 11%; /* #161b22 Canvas Subtler */
+    --card-foreground: 210 12% 93%;
 
     --popover: 215 21% 11%;
-    --popover-foreground: 212 12% 82%;
+    --popover-foreground: 210 12% 93%;
 
-    --primary: 135 59% 33%; /* #238636 */
+    --primary: 137 57% 33%; /* #238636 Success Button */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 215 28% 17%; /* #21262d */
-    --secondary-foreground: 212 12% 82%;
+    --secondary: 215 28% 17%; /* #21262d Button Default */
+    --secondary-foreground: 210 12% 93%;
 
-    --muted: 215 21% 11%;
-    --muted-foreground: 212 10% 55%; /* #8b949e */
+    --muted: 215 21% 11%; /* #161b22 */
+    --muted-foreground: 212 10% 57%; /* #8b949e Muted Text */
 
-    --accent: 213 12% 21%; /* #30363d - using as hover state */
-    --accent-foreground: 212 12% 82%;
+    --accent: 213 12% 21%; /* #30363d Input Border / Hover */
+    --accent-foreground: 210 12% 93%;
 
     --destructive: 346 84% 61%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 213 12% 21%; /* #30363d */
     --input: 213 12% 21%;
-    --ring: 212 12% 82%;
+    --ring: 212 92% 43%; /* #1f6feb Focus Ring */
 
-    --chart-1: 135 59% 33%; /* Green */
+    --chart-1: 137 57% 33%; /* Green */
     --chart-2: 212 92% 45%; /* Blue */
     --chart-3: 262 52% 47%; /* Purple */
     --chart-4: 39 100% 57%; /* Yellow */
     --chart-5: 14 62% 48%; /* Orange */
 
-    --sidebar-background: 218 25% 7%; /* Match background or #010409 */
-    --sidebar-foreground: 212 12% 82%;
-    --sidebar-primary: 212 12% 82%;
-    --sidebar-primary-foreground: 218 25% 7%;
-    --sidebar-accent: 213 12% 21%;
-    --sidebar-accent-foreground: 212 12% 82%;
+    /* Sidebar - Matching Main Canvas but using utility classes for differentiation if needed */
+    --sidebar-background: 216 28% 7%; /* #0d1117 */
+    --sidebar-foreground: 210 12% 93%;
+    --sidebar-primary: 210 12% 93%;
+    --sidebar-primary-foreground: 216 28% 7%;
+    --sidebar-accent: 215 21% 11%; /* #161b22 */
+    --sidebar-accent-foreground: 210 12% 93%;
     --sidebar-border: 213 12% 21%;
-    --sidebar-ring: 212 12% 82%;
+    --sidebar-ring: 212 92% 43%;
   }
 }
 
