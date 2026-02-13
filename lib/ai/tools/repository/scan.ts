@@ -1,6 +1,6 @@
 import { tool } from 'ai';
 import { z } from 'zod';
-import { safetyClient } from '@/lib/ai/safety';
+import { safetyClient } from '@/lib/safety';
 
 export const scanRepository = tool({
   description: 'Scan a GitHub repository for security threats using SuperAgent. Detects prompt injections, malware patterns, and other vulnerabilities.',

@@ -18,7 +18,7 @@ export async function createMessage(
   try {
     // Only redact user messages (assistants are trusted/already safe)
     if (role === 'user' && content) {
-       const { safetyClient } = await import('@/lib/ai/safety'); 
+       const { safetyClient } = await import('@/lib/safety'); 
        // Uses SuperAgent 'redact' method which requires an LLM provider key
        // We use a lightweight model for speed/cost.
        const result = await safetyClient.redact({

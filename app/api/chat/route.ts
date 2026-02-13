@@ -16,48 +16,9 @@ export async function POST(req: Request) {
   }
 
   // 🛡️ Safety Guard (Fail-Open)
-  // We check the LAST message for malicious intent.
-  try {
-    const lastMessage = messages[messages.length - 1];
-    const content = typeof lastMessage.content === 'string' 
-      ? lastMessage.content 
-      : lastMessage.parts?.find((p: any) => p.type === 'text')?.text || '';
-
-    // Only scan if there is text content
-    if (content) {
-      const { safetyClient, GITHUB_AGENT_SAFETY_PROMPT } = await import('@/lib/ai/safety');
-      
-      // Race: Safety Check vs Timeout (800ms)
-      // If check is slow, we proceed (fail open) to avoid lag.
-      
-      // Race: Safety Check vs Timeout (800ms)
-      // If check is slow, we proceed (fail open) to avoid lag.
-      const safetyCheckPromise = safetyClient.guard({ 
-        input: content, 
-        systemPrompt: GITHUB_AGENT_SAFETY_PROMPT 
-      });
-
-      const timeoutPromise = new Promise<{ timeout: true }>((resolve) => 
-        setTimeout(() => resolve({ timeout: true }), 800)
-      );
-
-      const result = await Promise.race([safetyCheckPromise, timeoutPromise]);
-
-      if ('classification' in result && result.classification === 'block') {
-         console.warn("[Safety Guard] Blocked:", result.violation_types);
-         return new Response(JSON.stringify({
-           error: "Request blocked by safety policy.",
-           code: "safety_violation",
-           details: result.violation_types 
-         }), { status: 400 });
-      } else if ('timeout' in result) {
-         console.warn("[Safety Guard] Timeout - Proceeding (Fail Open)");
-      }
-    }
-  } catch (error) {
-    // Fail Open: Log error but allow request to proceed
-    console.error("[Safety Guard] Check Error (Proceeding):", error);
-  }
+  const { validateMessageSafety } = await import('@/lib/safety');
+  const safetyResponse = await validateMessageSafety(messages);
+  if (safetyResponse) return safetyResponse;
 
   // Save the user's message
   if (chatId && messages.length > 0) {
@@ -77,17 +38,12 @@ export async function POST(req: Request) {
 
     const lastMessage = messages[messages.length - 1];
     if (lastMessage.role === 'user') {
-      const { redactContent } = await import('@/lib/ai/redaction');
-      
       const content = typeof lastMessage.content === 'string' 
         ? lastMessage.content 
         : lastMessage.parts?.find((p: any) => p.type === 'text')?.text || '';
 
-      // Redact PII before saving to history (Privacy)
-      // The LLM still gets the raw message (in 'messages' array below) for full context.
-      const { redacted } = await redactContent(content);
-      
-      await messagesService.createMessage(chatId, 'user', redacted, supabase);
+      // Redaction is handled internally by createMessage
+      await messagesService.createMessage(chatId, 'user', content, supabase);
     }
   }
 
