@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import * as messagesService from '@/lib/services/messages'
+import * as messagesService from '@/lib/services/messages.client'
 
 export interface Message {
   id: string
@@ -41,9 +41,10 @@ export function useMessages(chatId: string | null) {
       if (!chatId) throw new Error('No chat ID provided')
       
       try {
-        const newMessage = await messagesService.createMessage(chatId, role, content)
-        setMessages((prev) => [...prev, newMessage])
-        return newMessage
+        // const newMessage = await messagesService.createMessage(chatId, role, content)
+        // setMessages((prev) => [...prev, newMessage])
+        // return newMessage
+        throw new Error("sendMessage via useMessages is deprecated. Use useChat hook.");
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to send message'
         setError(message)

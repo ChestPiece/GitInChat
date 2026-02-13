@@ -7,7 +7,7 @@ import { ChatEmptyState } from '@/components/chat-empty-state'
 import { getUser } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
 import { useChat } from '@ai-sdk/react'
-import * as messagesService from '@/lib/services/messages'
+import * as messagesService from '@/lib/services/messages.client'
 import { toast } from 'sonner'
 import { UIMessage } from 'ai'
 
