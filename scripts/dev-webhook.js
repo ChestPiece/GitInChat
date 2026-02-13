@@ -2,7 +2,7 @@
 const SmeeClient = require('smee-client');
 require('dotenv').config();
 
-const webhookUrl = process.env.GITHUB_WEBHOOK_URL || 'https://smee.io/6QxjrxJmGyc0vjW'; // Fallback to the one user provided if env missing
+const webhookUrl = process.env.GITHUB_WEBHOOK_URL || process.env['smee-webhook-url'] || 'https://smee.io/6QxjrxJmGyc0vjW';
 
 if (!webhookUrl || !webhookUrl.startsWith('http')) {
     console.error('Error: GITHUB_WEBHOOK_URL is missing or invalid in .env');
