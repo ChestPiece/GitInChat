@@ -1,4 +1,6 @@
-import { tool } from 'ai';
+
+import { createTool } from '../create-tool';
+
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
 import { openai } from '@ai-sdk/openai';
@@ -31,9 +33,9 @@ async function findRelevantContent(userQuery: string, limit = 5) {
   return data;
 }
 
-export const searchCodebaseTool = tool({
+export const searchCodebaseTool = createTool({
   description: 'Search the entire project codebase for relevant code snippets, patterns, or definitions using semantic search. Use this when you need to understand how something is implemented across files, find definitions, or locate specific logic.',
-  inputSchema: z.object({
+  parameters: z.object({
     query: z.string().describe('The code-related question or search query (e.g., "how is auth handled?", "where is the chat component defined?")'),
     limit: z.number().optional().default(5).describe('Number of results to return (default 5)'),
   }),

@@ -1,5 +1,5 @@
 
-import { tool } from 'ai';
+import { createTool } from '../../create-tool';
 import { z } from 'zod';
 import { getGitHubClient } from '@/lib/github/client';
 
@@ -13,9 +13,9 @@ import { createSuccess, createError } from '../../utils';
 
 // ... (schema remains)
 
-export const getRepositoryFileContent = tool({
+export const getRepositoryFileContent = createTool({
   description: 'Get the content of a file in a repository. Use this to read code or config files.',
-  inputSchema: getRepositoryFileContentSchema,
+  parameters: getRepositoryFileContentSchema,
   execute: async ({ owner, repo, path }: z.infer<typeof getRepositoryFileContentSchema>) => {
     const octokit = await getGitHubClient();
     try {

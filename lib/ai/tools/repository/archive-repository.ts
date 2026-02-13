@@ -1,4 +1,4 @@
-import { tool } from 'ai';
+import { createTool } from '../../create-tool';
 import { z } from 'zod';
 import { getGitHubClient } from '@/lib/github/client';
 
@@ -11,7 +11,7 @@ import { createSuccess, createError } from '../../utils';
 
 // ... (schema remains)
 
-export const archiveRepositoryTool = tool({
+export const archiveRepositoryTool = createTool({
   description: `
   Archive a repository, making it read-only.
 
@@ -28,7 +28,7 @@ export const archiveRepositoryTool = tool({
   Always confirm with the user that they understand archiving makes the repo read-only.
   `,
   
-  inputSchema: archiveRepositorySchema,
+  parameters: archiveRepositorySchema,
   
   execute: async ({ owner, repo }: z.infer<typeof archiveRepositorySchema>) => {
     try {

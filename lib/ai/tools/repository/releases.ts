@@ -1,4 +1,4 @@
-import { tool } from 'ai';
+import { createTool } from '../../create-tool';
 import { z } from 'zod';
 import { getGitHubClient } from '@/lib/github/client';
 
@@ -12,9 +12,9 @@ import { createSuccess, createError } from '../../utils';
 
 // ... (schema remains)
 
-export const listReleases = tool({
+export const listReleases = createTool({
   description: 'List releases of a repository. Use this to see published versions and their details.',
-  inputSchema: listReleasesSchema,
+  parameters: listReleasesSchema,
   execute: async ({ owner, repo, limit = 30 }: z.infer<typeof listReleasesSchema>) => {
     const octokit = await getGitHubClient();
     try {
@@ -53,9 +53,9 @@ const getReleaseDetailsSchema = z.object({
   tag: z.string().optional().describe('Tag name to get release by tag'),
 });
 
-export const getReleaseDetails = tool({
+export const getReleaseDetails = createTool({
   description: 'Get details of a specific release or the latest release.',
-  inputSchema: getReleaseDetailsSchema,
+  parameters: getReleaseDetailsSchema,
   execute: async ({ owner, repo, release_id, tag }: z.infer<typeof getReleaseDetailsSchema>) => {
     const octokit = await getGitHubClient();
     try {

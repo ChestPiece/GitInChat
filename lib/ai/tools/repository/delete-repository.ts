@@ -1,4 +1,4 @@
-import { tool } from 'ai';
+import { createTool } from '../../create-tool';
 import { z } from 'zod';
 import { getGitHubClient } from '@/lib/github/client';
 
@@ -12,7 +12,7 @@ import { createSuccess, createError } from '../../utils';
 
 // ... (schema remains)
 
-export const deleteRepositoryTool = tool({
+export const deleteRepositoryTool = createTool({
   description: `
   ⚠️ PERMANENTLY DELETE A REPOSITORY ⚠️
 
@@ -34,7 +34,7 @@ export const deleteRepositoryTool = tool({
   - Acknowledges they understand it's permanent
   `,
   
-  inputSchema: deleteRepositorySchema,
+  parameters: deleteRepositorySchema,
   
   execute: async ({ owner, repo, confirm_name }: z.infer<typeof deleteRepositorySchema>) => {
     // CRITICAL: Verify confirmation
@@ -44,6 +44,9 @@ export const deleteRepositoryTool = tool({
     
     try {
       const octokit = await getGitHubClient();
+
+      // Check if repo exists and get details for safer confirmation
+      const { data: repoDetails } = await octokit.rest.repos.get({ owner, repo });
       
       await octokit.rest.repos.delete({ owner, repo });
       

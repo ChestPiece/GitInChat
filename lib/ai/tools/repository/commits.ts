@@ -1,4 +1,4 @@
-import { tool } from 'ai';
+import { createTool } from '../../create-tool';
 import { z } from 'zod';
 import { getGitHubClient } from '@/lib/github/client';
 
@@ -15,9 +15,9 @@ import { createSuccess, createError } from '../../utils';
 
 // ... (schema remains)
 
-export const listCommits = tool({
+export const listCommits = createTool({
   description: 'List recent commits of a repository. Use this to see commit history.',
-  inputSchema: listCommitsSchema,
+  parameters: listCommitsSchema,
   execute: async ({ owner, repo, branch, author, since, limit = 30 }: z.infer<typeof listCommitsSchema>) => {
     const octokit = await getGitHubClient();
     try {
@@ -53,9 +53,9 @@ const getCommitDetailsSchema = z.object({
   sha: z.string().describe('Commit SHA'),
 });
 
-export const getCommitDetails = tool({
+export const getCommitDetails = createTool({
   description: 'Get detailed information about a specific commit including files changed.',
-  inputSchema: getCommitDetailsSchema,
+  parameters: getCommitDetailsSchema,
   execute: async ({ owner, repo, sha }: z.infer<typeof getCommitDetailsSchema>) => {
     const octokit = await getGitHubClient();
     try {

@@ -1,5 +1,5 @@
 
-import { redactContent } from '@/lib/ai/redaction';
+import { redactContent } from '@/lib/safety';
 
 async function testRedaction() {
   console.log("🔒 Testing Redaction...");

@@ -1,4 +1,4 @@
-import { tool } from 'ai';
+import { createTool } from '../../create-tool';
 import { z } from 'zod';
 import { getGitHubClient } from '@/lib/github/client';
 
@@ -18,7 +18,7 @@ import { createSuccess, createError } from '../../utils';
 
 // ... (schema remains)
 
-export const updateRepositoryTool = tool({
+export const updateRepositoryTool = createTool({
   description: `
   Update repository settings.
   
@@ -31,7 +31,7 @@ export const updateRepositoryTool = tool({
   Always confirm with the user before making changes.
   `,
   
-  inputSchema: updateRepositorySchema,
+  parameters: updateRepositorySchema,
   
   execute: async ({ owner, repo, ...updates }: z.infer<typeof updateRepositorySchema>) => {
     try {
@@ -51,7 +51,10 @@ export const updateRepositoryTool = tool({
         private: data.private,
         html_url: data.html_url,
         updated_fields: updatedFields,
-        message: 'Repository updated successfully'
+        message: 'Repository updated successfully',
+        warning: updates.name && data.name !== updates.name 
+          ? `Note: Repository name was sanitized by GitHub from "${updates.name}" to "${data.name}"` 
+          : undefined
       });
       
     } catch (error: any) {

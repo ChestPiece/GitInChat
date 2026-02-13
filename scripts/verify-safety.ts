@@ -1,6 +1,6 @@
 
 // Use relative path to avoid tsx alias resolution issues
-import { safetyClient, GITHUB_AGENT_SAFETY_PROMPT } from '../lib/ai/safety';
+import { safetyClient, GITHUB_AGENT_SAFETY_PROMPT } from '../lib/safety';
 
 async function testSafetyCient() {
   console.log("🧪 Testing Safety Client...");

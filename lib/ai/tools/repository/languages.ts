@@ -1,4 +1,4 @@
-import { tool } from 'ai';
+import { createTool } from '../../create-tool';
 import { z } from 'zod';
 import { getGitHubClient } from '@/lib/github/client';
 
@@ -11,9 +11,9 @@ import { createSuccess, createError } from '../../utils';
 
 // ... (schema remains)
 
-export const getLanguages = tool({
+export const getLanguages = createTool({
   description: 'Get the language breakdown of a repository. Shows bytes per language and percentage.',
-  inputSchema: getLanguagesSchema,
+  parameters: getLanguagesSchema,
   execute: async ({ owner, repo }: z.infer<typeof getLanguagesSchema>) => {
     const octokit = await getGitHubClient();
     try {

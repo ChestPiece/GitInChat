@@ -1,10 +1,10 @@
-import { tool } from 'ai';
+import { createTool } from '../../create-tool';
 import { z } from 'zod';
 import { safetyClient } from '@/lib/safety';
 
-export const scanRepository = tool({
+export const scanRepository = createTool({
   description: 'Scan a GitHub repository for security threats using SuperAgent. Detects prompt injections, malware patterns, and other vulnerabilities.',
-  inputSchema: z.object({
+  parameters: z.object({
     repoUrl: z.string()
       .url()
       .regex(/^https:\/\/github\.com\/[\w-]+\/[\w.-]+$/, "Must be a valid GitHub repository URL (e.g., https://github.com/user/repo)")

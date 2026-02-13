@@ -1,4 +1,4 @@
-import { tool } from 'ai';
+import { createTool } from '../../create-tool';
 import { z } from 'zod';
 import { getGitHubClient } from '@/lib/github/client';
 
@@ -12,9 +12,9 @@ import { createSuccess, createError } from '../../utils';
 
 // ... (schema remains)
 
-export const listTags = tool({
+export const listTags = createTool({
   description: 'List git tags of a repository. Use this to see version tags.',
-  inputSchema: listTagsSchema,
+  parameters: listTagsSchema,
   execute: async ({ owner, repo, limit = 30 }: z.infer<typeof listTagsSchema>) => {
     const octokit = await getGitHubClient();
     try {

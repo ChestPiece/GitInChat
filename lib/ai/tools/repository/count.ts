@@ -1,4 +1,4 @@
-import { tool } from 'ai';
+import { createTool } from '../../create-tool';
 import { z } from 'zod';
 import { getGitHubClient } from '@/lib/github/client';
 
@@ -12,9 +12,9 @@ import { createSuccess, createError } from '../../utils';
 
 // ... (schema remains)
 
-export const countRepositories = tool({
+export const countRepositories = createTool({
   description: 'Get the total count of repositories for the authenticated user. Use this when user asks "how many repos do I have?" or "count my forked repos".',
-  inputSchema: countRepositoriesSchema,
+  parameters: countRepositoriesSchema,
   execute: async ({ visibility = 'all', affiliation = 'owner,collaborator,organization_member', type }: z.infer<typeof countRepositoriesSchema>) => {
     const octokit = await getGitHubClient();
     try {

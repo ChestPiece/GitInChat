@@ -1,4 +1,4 @@
-import { tool } from 'ai';
+import { createTool } from '../../create-tool';
 import { z } from 'zod';
 import { getGitHubClient } from '@/lib/github/client';
 
@@ -18,7 +18,7 @@ import { createSuccess, createError } from '../../utils';
 
 // ... (schema remains)
 
-export const createRepositoryTool = tool({
+export const createRepositoryTool = createTool({
   description: `
   Create a new repository for the authenticated user.
   
@@ -29,7 +29,7 @@ export const createRepositoryTool = tool({
   You can set visibility, description, and auto-initialization options.
   `,
   
-  inputSchema: createRepositorySchema,
+  parameters: createRepositorySchema,
   
   execute: async (params: z.infer<typeof createRepositorySchema>) => {
     try {
@@ -51,7 +51,10 @@ export const createRepositoryTool = tool({
         private: data.private,
         description: data.description,
         clone_url: data.clone_url,
-        message: `Repository "${data.name}" created successfully`
+        message: `Repository "${data.name}" created successfully`,
+        warning: params.name !== data.name 
+          ? `Note: Repository name was sanitized by GitHub from "${params.name}" to "${data.name}"` 
+          : undefined
       });
       
     } catch (error: any) {

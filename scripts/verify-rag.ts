@@ -32,24 +32,24 @@ async function main() {
       messages: [
         { role: 'user', content: query }
       ],
-      onStepFinish: (step) => {
-        console.log(`\n[Step ${step.stepType}]`);
+      onStepFinish: (step: any) => {
+        console.log(`\n[Step ${(step as any).stepType}]`);
         if (step.toolCalls) {
-            step.toolCalls.forEach(tc => {
+            step.toolCalls.forEach((tc: any) => {
                 console.log(`Tool Call: ${tc.toolName}`);
-                console.log(`Args: ${JSON.stringify(tc.args)}`);
+                console.log(`Args: ${JSON.stringify((tc as any).args)}`);
             });
         }
         if (step.toolResults) {
-             step.toolResults.forEach(tr => {
+             step.toolResults.forEach((tr: any) => {
                  console.log(`Tool Result (${tr.toolName}):`);
-                 const res = tr.result;
+                 const res = (tr as any).result;
                  const str = typeof res === 'string' ? res : JSON.stringify(res) || 'undefined';
                  console.log(str.length > 200 ? str.slice(0, 200) + '...' : str);
              });
         }
       }
-    });
+    } as any);
 
     console.log("\n---------------------------------------------------");
     console.log("Final Response:");

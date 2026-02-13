@@ -1,5 +1,5 @@
 
-import { tool } from 'ai';
+import { createTool } from '../../create-tool';
 import { z } from 'zod';
 import { getGitHubClient } from '@/lib/github/client';
 
@@ -13,9 +13,9 @@ import { createSuccess, createError } from '../../utils';
 
 // ... (schema remains)
 
-export const starRepository = tool({
+export const starRepository = createTool({
   description: 'Star or unstar a repository. Use this to star/unstar a repo.',
-  inputSchema: starRepositorySchema,
+  parameters: starRepositorySchema,
   execute: async ({ owner, repo, action }: z.infer<typeof starRepositorySchema>) => {
     const octokit = await getGitHubClient();
     try {

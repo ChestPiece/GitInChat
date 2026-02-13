@@ -1,4 +1,4 @@
-import { tool } from 'ai';
+import { createTool } from '../../create-tool';
 import { z } from 'zod';
 import { getGitHubClient } from '@/lib/github/client';
 
@@ -13,9 +13,9 @@ import { createSuccess, createError } from '../../utils';
 
 // ... (schema remains)
 
-export const listBranches = tool({
+export const listBranches = createTool({
   description: 'List all branches of a repository. Use this to see what branches exist in a repo.',
-  inputSchema: listBranchesSchema,
+  parameters: listBranchesSchema,
   execute: async ({ owner, repo, protected: protectedOnly, limit = 30 }: z.infer<typeof listBranchesSchema>) => {
     const octokit = await getGitHubClient();
     try {
@@ -46,9 +46,9 @@ const getBranchDetailsSchema = z.object({
   branch: z.string().describe('Name of the branch'),
 });
 
-export const getBranchDetails = tool({
+export const getBranchDetails = createTool({
   description: 'Get detailed information about a specific branch including protection rules.',
-  inputSchema: getBranchDetailsSchema,
+  parameters: getBranchDetailsSchema,
   execute: async ({ owner, repo, branch }: z.infer<typeof getBranchDetailsSchema>) => {
     const octokit = await getGitHubClient();
     try {

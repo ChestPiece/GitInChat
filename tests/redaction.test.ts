@@ -6,13 +6,14 @@ const mocks = vi.hoisted(() => ({
   redact: vi.fn()
 }));
 
-vi.mock('../lib/ai/safety', () => ({
-  safetyClient: {
+// Mock safety-agent
+vi.mock('safety-agent', () => ({
+  createClient: () => ({
     redact: mocks.redact
-  }
+  })
 }));
 
-import { redactContent } from '../lib/ai/redaction';
+import { redactContent } from '../lib/safety';
 
 describe('redactContent', () => {
   it('should return redacted content when safetyClient succeeds', async () => {

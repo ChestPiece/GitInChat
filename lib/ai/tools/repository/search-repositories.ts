@@ -1,4 +1,4 @@
-import { tool } from 'ai';
+import { createTool } from '../../create-tool';
 import { z } from 'zod';
 import { getGitHubClient } from '@/lib/github/client';
 
@@ -13,9 +13,9 @@ import { createSuccess, createError } from '../../utils';
 
 // ... (schema remains)
 
-export const searchRepositoriesTool = tool({
+export const searchRepositoriesTool = createTool({
   description: `...`, // (description remains)
-  inputSchema: searchRepositoriesSchema,
+  parameters: searchRepositoriesSchema,
   execute: async ({ query, sort, order, per_page }: z.infer<typeof searchRepositoriesSchema>) => {
     try {
       const octokit = await getGitHubClient();

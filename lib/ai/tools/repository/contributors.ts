@@ -1,4 +1,4 @@
-import { tool } from 'ai';
+import { createTool } from '../../create-tool';
 import { z } from 'zod';
 import { getGitHubClient } from '@/lib/github/client';
 
@@ -12,9 +12,9 @@ import { createSuccess, createError } from '../../utils';
 
 // ... (schema remains)
 
-export const listContributors = tool({
+export const listContributors = createTool({
   description: 'List contributors to a repository with their commit counts. Use this to see who has contributed.',
-  inputSchema: listContributorsSchema,
+  parameters: listContributorsSchema,
   execute: async ({ owner, repo, limit = 30 }: z.infer<typeof listContributorsSchema>) => {
     const octokit = await getGitHubClient();
     try {

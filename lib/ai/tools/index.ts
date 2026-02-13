@@ -21,6 +21,7 @@ import { scanRepository } from './repository/scan';
 import { getRecentEventsTool } from './github-events';
 import { searchCodebaseTool } from './search-codebase';
 import { readProjectFileTool } from './read-file';
+import { indexRepositoryTool, getIndexStatsTool } from './rag/index-repository';
 
 export const tools = {
   // Discovery (Read-only)
@@ -71,4 +72,8 @@ export const tools = {
   // Knowledge
   searchCodebase: searchCodebaseTool,
   readProjectFile: readProjectFileTool,
+
+  // RAG
+  indexRepository: indexRepositoryTool,
+  getIndexStats: getIndexStatsTool,
 };
