@@ -25,7 +25,7 @@ const nextConfig = {
           },
           {
              key: 'Content-Security-Policy',
-             value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https:; font-src 'self' data:; connect-src 'self' https://api.github.com https://*.supabase.co wss://*.supabase.co; frame-ancestors 'none';"
+             value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' blob: data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://api.github.com https://*.supabase.co wss://*.supabase.co https://vercel.live; frame-src https://vercel.live; frame-ancestors 'none';"
           }
         ],
       },
