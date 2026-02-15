@@ -31,7 +31,7 @@ export const updateRepositoryTool = createTool({
   Always confirm with the user before making changes.
   `,
   
-  parameters: updateRepositorySchema,
+  inputSchema: updateRepositorySchema,
   
   execute: async ({ owner, repo, ...updates }: z.infer<typeof updateRepositorySchema>) => {
     try {

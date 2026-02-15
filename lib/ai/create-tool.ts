@@ -5,12 +5,12 @@ import { createError } from './utils';
 
 export function createTool<T extends z.ZodType<any, any>, R = any>(params: {
   description: string;
-  parameters: T;
+  inputSchema: T;
   execute: (args: z.infer<T>) => Promise<R>;
 }): any {
   return aiTool({
     description: params.description,
-    parameters: zodToJsonSchema(params.parameters, 'parameters') as any,
+    inputSchema: params.inputSchema,
     execute: async (args: any) => {
       // Log start of tool execution
       console.log(`[Tool] ${params.description.split('\n')[0].trim().slice(0, 50)}... executing with args:`, JSON.stringify(args, null, 2));

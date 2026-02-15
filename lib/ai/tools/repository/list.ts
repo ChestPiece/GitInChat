@@ -18,7 +18,7 @@ import { createSuccess, createError } from '../../utils';
 
 export const listRepositories = createTool({
   description: 'List repositories of the authenticated user. IMPORTANT: When user asks for "all repos" or "show me everything", set fetchAll=true. To list ARCHIVED repos, set type="archived".',
-  parameters: listRepositoriesSchema,
+  inputSchema: listRepositoriesSchema,
   execute: async ({ sort = 'updated', direction = 'desc', limit = 100, visibility = 'all', affiliation = 'owner,collaborator,organization_member', fetchAll = false, type }: z.infer<typeof listRepositoriesSchema>) => {
     const octokit = await getGitHubClient();
     try {

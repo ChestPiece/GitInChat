@@ -14,7 +14,7 @@ import { createSuccess, createError } from '../../utils';
 
 export const listContributors = createTool({
   description: 'List contributors to a repository with their commit counts. Use this to see who has contributed.',
-  parameters: listContributorsSchema,
+  inputSchema: listContributorsSchema,
   execute: async ({ owner, repo, limit = 30 }: z.infer<typeof listContributorsSchema>) => {
     const octokit = await getGitHubClient();
     try {

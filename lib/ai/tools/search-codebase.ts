@@ -35,7 +35,7 @@ async function findRelevantContent(userQuery: string, limit = 5) {
 
 export const searchCodebaseTool = createTool({
   description: 'Search the entire project codebase for relevant code snippets, patterns, or definitions using semantic search. Use this when you need to understand how something is implemented across files, find definitions, or locate specific logic.',
-  parameters: z.object({
+  inputSchema: z.object({
     query: z.string().describe('The code-related question or search query (e.g., "how is auth handled?", "where is the chat component defined?")'),
     limit: z.number().optional().default(5).describe('Number of results to return (default 5)'),
   }),

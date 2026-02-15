@@ -18,7 +18,7 @@ import { createSuccess, createError } from '../../utils';
 
 export const listIssues = createTool({
   description: 'List issues of a repository. Use this to see open/closed issues.',
-  parameters: listIssuesSchema,
+  inputSchema: listIssuesSchema,
   execute: async ({ owner, repo, state = 'open', labels, sort = 'created', direction = 'desc', limit = 30 }: z.infer<typeof listIssuesSchema>) => {
     const octokit = await getGitHubClient();
     try {
@@ -64,7 +64,7 @@ const getIssueDetailsSchema = z.object({
 
 export const getIssueDetails = createTool({
   description: 'Get detailed information about a specific issue.',
-  parameters: getIssueDetailsSchema,
+  inputSchema: getIssueDetailsSchema,
   execute: async ({ owner, repo, issue_number }: z.infer<typeof getIssueDetailsSchema>) => {
     const octokit = await getGitHubClient();
     try {

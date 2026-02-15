@@ -15,7 +15,7 @@ import { createSuccess, createError } from '../../utils';
 
 export const starRepository = createTool({
   description: 'Star or unstar a repository. Use this to star/unstar a repo.',
-  parameters: starRepositorySchema,
+  inputSchema: starRepositorySchema,
   execute: async ({ owner, repo, action }: z.infer<typeof starRepositorySchema>) => {
     const octokit = await getGitHubClient();
     try {

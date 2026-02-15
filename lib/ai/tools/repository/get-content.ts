@@ -15,7 +15,7 @@ import { createSuccess, createError } from '../../utils';
 
 export const getRepositoryFileContent = createTool({
   description: 'Get the content of a file in a repository. Use this to read code or config files.',
-  parameters: getRepositoryFileContentSchema,
+  inputSchema: getRepositoryFileContentSchema,
   execute: async ({ owner, repo, path }: z.infer<typeof getRepositoryFileContentSchema>) => {
     const octokit = await getGitHubClient();
     try {

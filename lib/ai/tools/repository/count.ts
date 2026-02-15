@@ -14,7 +14,7 @@ import { createSuccess, createError } from '../../utils';
 
 export const countRepositories = createTool({
   description: 'Get the total count of repositories for the authenticated user. Use this when user asks "how many repos do I have?" or "count my forked repos".',
-  parameters: countRepositoriesSchema,
+  inputSchema: countRepositoriesSchema,
   execute: async ({ visibility = 'all', affiliation = 'owner,collaborator,organization_member', type }: z.infer<typeof countRepositoriesSchema>) => {
     const octokit = await getGitHubClient();
     try {

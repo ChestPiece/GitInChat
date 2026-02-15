@@ -13,7 +13,7 @@ import { createSuccess, createError } from '../../utils';
 
 export const getLanguages = createTool({
   description: 'Get the language breakdown of a repository. Shows bytes per language and percentage.',
-  parameters: getLanguagesSchema,
+  inputSchema: getLanguagesSchema,
   execute: async ({ owner, repo }: z.infer<typeof getLanguagesSchema>) => {
     const octokit = await getGitHubClient();
     try {

@@ -4,7 +4,7 @@ import { safetyClient } from '@/lib/safety';
 
 export const scanRepository = createTool({
   description: 'Scan a GitHub repository for security threats using SuperAgent. Detects prompt injections, malware patterns, and other vulnerabilities.',
-  parameters: z.object({
+  inputSchema: z.object({
     repoUrl: z.string()
       .url()
       .regex(/^https:\/\/github\.com\/[\w-]+\/[\w.-]+$/, "Must be a valid GitHub repository URL (e.g., https://github.com/user/repo)")

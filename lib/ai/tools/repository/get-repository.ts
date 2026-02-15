@@ -13,7 +13,7 @@ import { createSuccess, createError } from '../../utils';
 
 export const getRepositoryTool = createTool({
   description: `...`, // (description remains)
-  parameters: getRepositorySchema,
+  inputSchema: getRepositorySchema,
   execute: async ({ owner, repo }: z.infer<typeof getRepositorySchema>) => {
     try {
       const octokit = await getGitHubClient();

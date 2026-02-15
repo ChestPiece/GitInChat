@@ -15,7 +15,7 @@ import { createSuccess, createError } from '../../utils';
 
 export const searchRepositoriesTool = createTool({
   description: `...`, // (description remains)
-  parameters: searchRepositoriesSchema,
+  inputSchema: searchRepositoriesSchema,
   execute: async ({ query, sort, order, per_page }: z.infer<typeof searchRepositoriesSchema>) => {
     try {
       const octokit = await getGitHubClient();

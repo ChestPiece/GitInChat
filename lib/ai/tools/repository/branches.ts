@@ -15,7 +15,7 @@ import { createSuccess, createError } from '../../utils';
 
 export const listBranches = createTool({
   description: 'List all branches of a repository. Use this to see what branches exist in a repo.',
-  parameters: listBranchesSchema,
+  inputSchema: listBranchesSchema,
   execute: async ({ owner, repo, protected: protectedOnly, limit = 30 }: z.infer<typeof listBranchesSchema>) => {
     const octokit = await getGitHubClient();
     try {
@@ -48,7 +48,7 @@ const getBranchDetailsSchema = z.object({
 
 export const getBranchDetails = createTool({
   description: 'Get detailed information about a specific branch including protection rules.',
-  parameters: getBranchDetailsSchema,
+  inputSchema: getBranchDetailsSchema,
   execute: async ({ owner, repo, branch }: z.infer<typeof getBranchDetailsSchema>) => {
     const octokit = await getGitHubClient();
     try {

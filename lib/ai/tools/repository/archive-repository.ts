@@ -28,7 +28,7 @@ export const archiveRepositoryTool = createTool({
   Always confirm with the user that they understand archiving makes the repo read-only.
   `,
   
-  parameters: archiveRepositorySchema,
+  inputSchema: archiveRepositorySchema,
   
   execute: async ({ owner, repo }: z.infer<typeof archiveRepositorySchema>) => {
     try {

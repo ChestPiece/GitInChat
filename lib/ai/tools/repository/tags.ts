@@ -14,7 +14,7 @@ import { createSuccess, createError } from '../../utils';
 
 export const listTags = createTool({
   description: 'List git tags of a repository. Use this to see version tags.',
-  parameters: listTagsSchema,
+  inputSchema: listTagsSchema,
   execute: async ({ owner, repo, limit = 30 }: z.infer<typeof listTagsSchema>) => {
     const octokit = await getGitHubClient();
     try {

@@ -34,7 +34,7 @@ export const deleteRepositoryTool = createTool({
   - Acknowledges they understand it's permanent
   `,
   
-  parameters: deleteRepositorySchema,
+  inputSchema: deleteRepositorySchema,
   
   execute: async ({ owner, repo, confirm_name }: z.infer<typeof deleteRepositorySchema>) => {
     // CRITICAL: Verify confirmation

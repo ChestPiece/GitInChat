@@ -17,7 +17,7 @@ import { createSuccess, createError } from '../../utils';
 
 export const listPullRequests = createTool({
   description: 'List pull requests of a repository. Use this to see open/closed/merged PRs.',
-  parameters: listPullRequestsSchema,
+  inputSchema: listPullRequestsSchema,
   execute: async ({ owner, repo, state = 'open', sort = 'created', direction = 'desc', limit = 30 }: z.infer<typeof listPullRequestsSchema>) => {
     const octokit = await getGitHubClient();
     try {
@@ -61,7 +61,7 @@ const getPullRequestDetailsSchema = z.object({
 
 export const getPullRequestDetails = createTool({
   description: 'Get detailed information about a specific pull request.',
-  parameters: getPullRequestDetailsSchema,
+  inputSchema: getPullRequestDetailsSchema,
   execute: async ({ owner, repo, pull_number }: z.infer<typeof getPullRequestDetailsSchema>) => {
     const octokit = await getGitHubClient();
     try {

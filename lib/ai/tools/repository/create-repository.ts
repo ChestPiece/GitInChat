@@ -29,7 +29,7 @@ export const createRepositoryTool = createTool({
   You can set visibility, description, and auto-initialization options.
   `,
   
-  parameters: createRepositorySchema,
+  inputSchema: createRepositorySchema,
   
   execute: async (params: z.infer<typeof createRepositorySchema>) => {
     try {

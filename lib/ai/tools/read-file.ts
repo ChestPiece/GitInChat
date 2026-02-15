@@ -8,7 +8,7 @@ import { createTool } from '../create-tool';
 
 export const readProjectFileTool = createTool({
   description: 'Read the full content of a file from the project. Use this when you need detailed context beyond search snippets, or when you want to examine a specific file mentioned in search results.',
-  parameters: z.object({
+  inputSchema: z.object({
     filePath: z.string().describe('Relative path to the file (e.g., "lib/auth.ts" or "components/ui/button.tsx").'),
   }),
   execute: async ({ filePath }: { filePath: string }) => {

@@ -6,7 +6,7 @@ async function run() {
   console.log('--- Testing Success Case ---');
   const successTool = createTool({
     description: 'A test tool that succeeds',
-    parameters: z.object({ name: z.string() }),
+    inputSchema: z.object({ name: z.string() }),
     execute: async ({ name }) => {
       return { message: `Hello ${name}` };
     }
@@ -19,7 +19,7 @@ async function run() {
   console.log('\n--- Testing Error Case ---');
   const errorTool = createTool({
     description: 'A test tool that fails',
-    parameters: z.object({ shouldFail: z.boolean() }),
+    inputSchema: z.object({ shouldFail: z.boolean() }),
     execute: async ({ shouldFail }) => {
       if (shouldFail) {
         throw new Error('Simulated failure');

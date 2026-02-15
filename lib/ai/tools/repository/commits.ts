@@ -17,7 +17,7 @@ import { createSuccess, createError } from '../../utils';
 
 export const listCommits = createTool({
   description: 'List recent commits of a repository. Use this to see commit history.',
-  parameters: listCommitsSchema,
+  inputSchema: listCommitsSchema,
   execute: async ({ owner, repo, branch, author, since, limit = 30 }: z.infer<typeof listCommitsSchema>) => {
     const octokit = await getGitHubClient();
     try {
@@ -55,7 +55,7 @@ const getCommitDetailsSchema = z.object({
 
 export const getCommitDetails = createTool({
   description: 'Get detailed information about a specific commit including files changed.',
-  parameters: getCommitDetailsSchema,
+  inputSchema: getCommitDetailsSchema,
   execute: async ({ owner, repo, sha }: z.infer<typeof getCommitDetailsSchema>) => {
     const octokit = await getGitHubClient();
     try {
