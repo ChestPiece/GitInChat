@@ -13,6 +13,12 @@ import { GITHUB_AGENT_SYSTEM_PROMPT } from '@/lib/ai/prompts';
  */
 export const githubAgent = new ToolLoopAgent({
   model: openai('gpt-4o-mini'),
+  
+  // Explicit settings for predictable behavior
+  temperature: 0,  // Deterministic tool calls for consistency
+  maxOutputTokens: 2000,  // Prevent excessive generation
+  maxRetries: 2,  // Retry failed requests twice
+  
   instructions: GITHUB_AGENT_SYSTEM_PROMPT,
   tools,
   stopWhen: stepCountIs(5), 
