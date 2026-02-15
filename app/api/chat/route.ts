@@ -122,12 +122,14 @@ export async function POST(req: Request) {
   return createAgentUIStreamResponse({
     agent: githubAgent,
     uiMessages: messagesWithRAG,
+    
     onStepFinish: async ({ text }) => {
       // Save assistant responses as they complete each step
       if (chatId && text) {
         await messagesService.createMessage(chatId, 'assistant', text, supabase);
       }
-    }
+    },
+    
   });
 }
 
