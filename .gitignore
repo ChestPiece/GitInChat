@@ -12,3 +12,8 @@ node_modules/
 .DS_Store
 
 .env*
+
+# Documentation and Agent logs
+.agent/
+.refactor/
+docs/
