@@ -11,20 +11,24 @@ import { GITHUB_AGENT_SYSTEM_PROMPT } from '@/lib/ai/prompts';
  * - Automatic loop management
  * - Type-safe tool execution
  */
+export const agentModel = openai('gpt-4o-mini');
+export const agentTools = tools;
+export const agentSystemPrompt = GITHUB_AGENT_SYSTEM_PROMPT;
+
+/**
+ * @deprecated Use streamText with agentModel and agentTools instead
+ */
 export const githubAgent = new ToolLoopAgent({
-  model: openai('gpt-4o-mini'),
+  model: agentModel,
   
   // Explicit settings for predictable behavior
-  temperature: 0,  // Deterministic tool calls for consistency
-  maxOutputTokens: 2000,  // Prevent excessive generation
-  maxRetries: 2,  // Retry failed requests twice
+  temperature: 0,
+  maxOutputTokens: 2000,
+  maxRetries: 2,
   
-  instructions: GITHUB_AGENT_SYSTEM_PROMPT,
-  tools,
+  instructions: agentSystemPrompt,
+  tools: agentTools,
   stopWhen: stepCountIs(5), 
 });
 
-/**
- * Type export for use in UI components with useChat
- */
 export type { ToolLoopAgent };

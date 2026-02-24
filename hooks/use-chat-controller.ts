@@ -79,6 +79,7 @@ export function useChatController() {
                   id: m.id,
                   role: m.role as 'user' | 'assistant',
                   content: m.content,
+                  createdAt: m.created_at,
                   toolInvocations: [], // Default to empty if not in DB yet
                   parts: [], // Satisfy UIMessage type requirements (v6+)
               }))

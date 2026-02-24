@@ -49,6 +49,8 @@ export default function ChatPage() {
               displayName={userName}
               parts={message.parts}
               toolInvocations={message.toolInvocations}
+              createdAt={message.createdAt}
+              metadata={message.data || message.metadata}
             />
           ))
         )}

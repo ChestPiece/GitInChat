@@ -7,6 +7,7 @@ import { Github, User } from 'lucide-react'
 import { ChatToolInvocation } from '@/components/chat-tool-invocation'
 import { MessageContent } from '@/components/chat-message-content'
 import { MessageToolList } from '@/components/chat-message-tool-list'
+import { MessageMetadataDisplay } from '@/components/message-metadata'
 
 interface MessagePart {
   type: string;
@@ -25,6 +26,8 @@ interface ChatMessageProps {
   displayName?: string
   parts?: MessagePart[]
   toolInvocations?: any[] // Legacy support
+  createdAt?: Date | number | string
+  metadata?: any
 }
 
 export function ChatMessage({
@@ -34,6 +37,8 @@ export function ChatMessage({
   displayName = 'You',
   parts,
   toolInvocations,
+  createdAt,
+  metadata,
 }: ChatMessageProps) {
   const isUser = role === 'user'
 
@@ -83,6 +88,16 @@ export function ChatMessage({
 
              {/* Tool Parts & Invocations */}
              <MessageToolList toolParts={toolParts} toolInvocations={toolInvocations} />
+
+             {/* Metadata Footer */}
+             {!isUser && (
+                <div className="mt-4 pt-4 border-t border-border/50">
+                  <MessageMetadataDisplay 
+                    createdAt={createdAt}
+                    metadata={metadata}
+                  />
+                </div>
+             )}
           </div>
         </div>
       </div>
