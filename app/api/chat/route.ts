@@ -16,25 +16,27 @@ export async function POST(req: Request) {
     return new Response('Unauthorized', { status: 401 });
   }
 
-  // 1. Parallelize independent validation and storage operations
-  const safetyPromise = (async () => {
-    const { validateMessageSafety } = await import('@/lib/safety');
-    return validateMessageSafety(messages);
-  })();
+  if (!session?.provider_token) {
+    return new Response('GitHub token missing — please sign out and back in.', { status: 401 });
+  }
 
-  const ownershipPromise = (async () => {
-    if (!chatId) return null;
+  // 1. Check chat ownership BEFORE saving user message (prevents writing to unauthorized chats)
+  if (chatId) {
     const { data: chat, error } = await supabase
       .from('chats')
       .select('user_id')
       .eq('id', chatId)
       .single();
-    
-    // Check if chat exists and belongs to user
+
     if (error || !chat || chat.user_id !== session?.user?.id) {
-       return new Response('Forbidden: You do not have access to this chat', { status: 403 });
+      return new Response('Forbidden: You do not have access to this chat', { status: 403 });
     }
-    return null;
+  }
+
+  // 2. Parallelize independent validation and storage operations
+  const safetyPromise = (async () => {
+    const { validateMessageSafety } = await import('@/lib/safety');
+    return validateMessageSafety(messages);
   })();
 
   const userMessageSavePromise = (async () => {
@@ -91,13 +93,11 @@ export async function POST(req: Request) {
       return '';
   })();
 
-  // 2. Await critical checks
-  const [safetyResponse, ownershipResponse] = await Promise.all([safetyPromise, ownershipPromise]);
-
+  // 3. Await safety check
+  const safetyResponse = await safetyPromise;
   if (safetyResponse) return safetyResponse;
-  if (ownershipResponse) return ownershipResponse;
 
-  // 3. Await pre-computations needed for response
+  // 4. Await pre-computations needed for response
   const [ragContext] = await Promise.all([ragPromise, userMessageSavePromise]);
 
   // Transform messages to ensure they have the 'parts' array required by createAgentUIStreamResponse
@@ -115,30 +115,38 @@ export async function POST(req: Request) {
     };
   });
 
-  // Inject RAG context into the first system message or prepend it
-  const messagesWithRAG = ragContext 
+  // Inject RAG context as a system message (content: string is the correct UIMessage format)
+  const messagesWithRAG = ragContext
     ? [
         {
           role: 'system' as const,
-          parts: [{ type: 'text' as const, text: ragContext }],
+          content: ragContext,
         },
         ...transformedMessages,
       ]
     : transformedMessages;
 
   // Use createAgentUIStreamResponse for proper streaming with ToolLoopAgent
-  return createAgentUIStreamResponse({
-    agent: githubAgent,
-    uiMessages: messagesWithRAG,
-    
-    onStepFinish: async ({ text }) => {
-      // Save assistant responses as they complete each step
-      if (chatId && text) {
-        await messagesService.createMessage(chatId, 'assistant', text, supabase);
-      }
-    },
-    
-  });
+  try {
+    return createAgentUIStreamResponse({
+      agent: githubAgent,
+      uiMessages: messagesWithRAG,
+
+      onStepFinish: async ({ text }) => {
+        // Only save steps that produce text (tool-call-only steps have empty text)
+        if (chatId && text) {
+          try {
+            await messagesService.createMessage(chatId, 'assistant', text, supabase);
+          } catch (err) {
+            console.error('[chat] Failed to save assistant message:', err);
+          }
+        }
+      },
+    });
+  } catch (err) {
+    console.error('[chat] Agent stream error:', err);
+    return new Response('Internal server error', { status: 500 });
+  }
 }
 
 

@@ -18,15 +18,15 @@ export function useChatController() {
   const [initialMessages, setInitialMessages] = useState<UIMessage[]>([])
   const [isInitialLoading, setIsInitialLoading] = useState(false)
 
-  // We use sendMessage instead of append because append is missing in this version
+  // sendMessage is the v6 API (append was removed in AI SDK v6)
   const { messages, sendMessage, status, setMessages } = useChat({
-    api: '/api/chat', // Default is /api/chat
+    api: '/api/chat',
     body: { chatId: currentChatId },
     initialMessages: initialMessages,
     onError: (error: Error) => {
       toast.error('Failed to send message: ' + error.message)
     }
-  } as any);
+  });
 
   const isLoading = status === 'streaming' || status === 'submitted';
 
@@ -102,7 +102,7 @@ export function useChatController() {
         await sendMessage({
             role: 'user',
             content
-        } as any)
+        })
     } catch (error: any) {
         console.error('Error sending message:', error)
         toast.error('Failed to send message: ' + (error.message || 'Unknown error'))

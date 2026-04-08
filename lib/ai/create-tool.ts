@@ -1,17 +1,16 @@
 import { tool as aiTool } from 'ai';
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 import { createError } from './utils';
 
 export function createTool<T extends z.ZodType<any, any>, R = any>(params: {
   description: string;
   inputSchema: T;
   execute: (args: z.infer<T>) => Promise<R>;
-}): any {
+}) {
   return aiTool({
     description: params.description,
     inputSchema: params.inputSchema,
-    execute: async (args: any) => {
+    execute: async (args: z.infer<T>) => {
       // Log start of tool execution
       console.log(`[Tool] ${params.description.split('\n')[0].trim().slice(0, 50)}... executing with args:`, JSON.stringify(args, null, 2));
       
@@ -41,5 +40,5 @@ export function createTool<T extends z.ZodType<any, any>, R = any>(params: {
         );
       }
     }
-  } as any) as any;
+  });
 }

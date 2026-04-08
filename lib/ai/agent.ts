@@ -28,7 +28,7 @@ export const githubAgent = new ToolLoopAgent({
   
   instructions: agentSystemPrompt,
   tools: agentTools,
-  stopWhen: stepCountIs(5), 
+  stopWhen: stepCountIs(20),
 });
 
 export type { ToolLoopAgent };
