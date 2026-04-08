@@ -23,48 +23,67 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0d1117] flex flex-col items-center justify-center p-4">
-      {/* Logo */}
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+      {/* GitHub mark */}
       <div className="mb-6">
-        <Github className="w-12 h-12 text-white" />
+        <Github className="w-12 h-12 text-foreground" />
       </div>
 
       <div className="w-full max-w-[340px]">
-        <h1 className="text-2xl font-light text-white text-center mb-4">Sign in to GitHub Chat</h1>
-        
+        <h1 className="text-2xl font-semibold text-foreground text-center mb-4">
+          Sign in to GitInChat
+        </h1>
+
         {/* Card */}
-        <div className="bg-[#161b22] border border-[#30363d] rounded-md p-4">
+        <div className="bg-card border border-border rounded-md p-4">
           {error && (
-             <div className="mb-4 bg-red-900/10 border border-red-500/50 text-red-200 px-3 py-2 rounded-md text-sm">
-               {error}
-             </div>
+            <div className="mb-4 bg-destructive/10 border border-destructive/50 text-destructive px-3 py-2 rounded-md text-sm">
+              {error}
+            </div>
           )}
 
-          <div className="space-y-4">
-            <Button
-              onClick={handleGithubSignIn}
-              disabled={isLoading}
-              className="w-full bg-[#238636] hover:bg-[#2ea043] text-white font-semibold h-9 border border-[rgba(240,246,252,0.1)] shadow-sm"
-            >
-              {isLoading ? 'Signing in...' : 'Sign in with GitHub'}
-            </Button>
-          </div>
+          <Button
+            onClick={handleGithubSignIn}
+            disabled={isLoading}
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold h-9 border border-white/10 shadow-sm flex items-center gap-2"
+          >
+            {isLoading ? (
+              <>
+                <svg
+                  className="animate-spin w-4 h-4 shrink-0"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" strokeOpacity="0.3" />
+                  <path d="M8 2 A6 6 0 0 1 14 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+                Signing in...
+              </>
+            ) : (
+              <>
+                <Github className="w-4 h-4 shrink-0" />
+                Sign in with GitHub
+              </>
+            )}
+          </Button>
         </div>
 
-        {/* Footer Link */}
-        <div className="mt-4 border border-[#30363d] rounded-md p-4 text-center text-sm">
-          <span className="text-[#c9d1d9]">New to GitHub Chat? </span>
-          <Link href="/auth/signup" className="text-[#58a6ff] hover:underline hover:text-[#58a6ff]">
+        {/* "New user?" card */}
+        <div className="mt-4 border border-border rounded-md p-4 text-center text-sm">
+          <span className="text-muted-foreground">New to GitInChat? </span>
+          <Link href="/auth/signup" className="text-ring hover:underline">
             Create an account
           </Link>
           .
         </div>
-        
-        <div className="mt-8 text-center text-xs text-[#8b949e] space-x-3">
-           <a href="#" className="hover:text-[#58a6ff] hover:underline">Terms</a>
-           <a href="#" className="hover:text-[#58a6ff] hover:underline">Privacy</a>
-           <a href="#" className="hover:text-[#58a6ff] hover:underline">Docs</a>
-           <a href="#" className="hover:text-[#58a6ff] hover:underline">Contact GitHub Support</a>
+
+        {/* Footer links */}
+        <div className="mt-8 text-center text-xs text-muted-foreground space-x-3">
+          <a href="#" className="hover:text-ring hover:underline">Terms</a>
+          <a href="#" className="hover:text-ring hover:underline">Privacy</a>
+          <a href="#" className="hover:text-ring hover:underline">Docs</a>
+          <a href="#" className="hover:text-ring hover:underline">Contact GitHub Support</a>
         </div>
       </div>
     </div>
