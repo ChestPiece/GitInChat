@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  webpack: (config) => {
+    // safety-agent → @daytonaio/sdk → @aws-sdk/client-s3 (not installed, not needed)
+    config.resolve.alias['@aws-sdk/client-s3'] = false;
+    config.resolve.alias['@aws-sdk/lib-storage'] = false;
+    return config;
+  },
   typescript: {
     ignoreBuildErrors: true,
   },

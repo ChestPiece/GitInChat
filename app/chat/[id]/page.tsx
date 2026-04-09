@@ -7,11 +7,10 @@ import { ChatEmptyState } from '@/components/chat-empty-state'
 import { getUser } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
 import { useChat } from '@ai-sdk/react'
+import { DefaultChatTransport, UIMessage } from 'ai'
 import * as messagesService from '@/lib/services/messages.client'
 import { toast } from 'sonner'
-import { UIMessage } from 'ai'
 import { mapDatabaseMessagesToUIMessages } from '@/lib/mappers/message-mapper'
-import { LoadingSpinner } from '@/components/ui/spinner'
 
 interface ChatPageProps {
   params: Promise<{
@@ -24,11 +23,8 @@ interface ChatUser {
     email?: string;
 }
 
-// Extend UIMessage to include properties we need that might be missing or optional in the base type
 export type ExtendedUIMessage = UIMessage & {
-    toolInvocations?: any[];
     createdAt?: Date | number | string;
-    content?: string; // Legacy support for string content
     data?: any;
     metadata?: any;
 }
@@ -38,18 +34,16 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
   const router = useRouter()
   const [user, setUser] = useState<ChatUser | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  
-  const [initialMessages, setInitialMessages] = useState<ExtendedUIMessage[]>([])
   const [isInitialLoading, setIsInitialLoading] = useState(true)
 
-  // Remove initialMessages from options as it is not supported or causing issues
   const { messages, sendMessage, status, setMessages } = useChat({
+    transport: new DefaultChatTransport({
+      api: '/api/chat',
+      body: { chatId: id },
+    }),
     onError: (error: Error) => {
       toast.error('Failed to send message: ' + error.message)
     },
-    onFinish: () => {
-        // Optional: Trigger a router refresh or other side effect if needed
-    }
   });
 
   const isLoading = status === 'submitted' || status === 'streaming';
@@ -72,22 +66,20 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
     initializeUser()
   }, [router])
 
-  // Fetch initial messages from DB
   useEffect(() => {
     const loadMessages = async () => {
-        setIsInitialLoading(true)
-        try {
-            const fetched = await messagesService.fetchMessages(id)
-            if (fetched && fetched.length > 0) {
-                 const mappedMessages = mapDatabaseMessagesToUIMessages(fetched);
-                 setMessages(mappedMessages as ExtendedUIMessage[])
-            }
-        } catch (e) {
-            console.error(e)
-            toast.error('Failed to load history')
-        } finally {
-            setIsInitialLoading(false)
+      setIsInitialLoading(true)
+      try {
+        const fetched = await messagesService.fetchMessages(id)
+        if (fetched && fetched.length > 0) {
+          setMessages(mapDatabaseMessagesToUIMessages(fetched))
         }
+      } catch (e) {
+        console.error(e)
+        toast.error('Failed to load history')
+      } finally {
+        setIsInitialLoading(false)
+      }
     }
     loadMessages()
   }, [id, setMessages])
@@ -97,25 +89,17 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
   }, [messages])
 
   const handleSendMessage = async (content: string) => {
-      if (!content.trim()) return;
-      try {
-          // Construct message with parts as expected by the new UIMessage type
-          await sendMessage({
-              role: 'user',
-              parts: [{ type: 'text', text: content }],
-          } as any, { 
-            body: { chatId: id } 
-          });
-      } catch (error: any) {
-         console.error("Error creating message", error);
-         toast.error("Failed to prevent message");
-      }
+    if (!content.trim()) return;
+    await sendMessage({
+      role: 'user',
+      parts: [{ type: 'text', text: content }],
+    });
   };
 
   if (!user || isInitialLoading) {
     return (
-      <div className="flex items-center justify-center h-full bg-[#0d1117]">
-        <div className="text-[#8b949e]">Loading...</div>
+      <div className="flex items-center justify-center h-full bg-background">
+        <div className="text-muted-foreground">Loading...</div>
       </div>
     )
   }
@@ -124,45 +108,39 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+      <div className="flex-1 min-h-0 overflow-y-auto p-4 lg:p-6 space-y-4">
         {messages.length === 0 ? (
-          <ChatEmptyState
-            title="No messages yet"
-            description="Start the conversation!"
-            onSuggest={handleSendMessage}
-          />
+          <ChatEmptyState onSuggest={handleSendMessage} />
         ) : (
           messages.map((message) => {
             const extendedMessage = message as ExtendedUIMessage;
-            // Provide defaults for strict type checking if casting is not enough
-            const role = (message.role as string === 'data' ? 'assistant' : message.role) as "user" | "assistant"; 
-            
             return (
-                <ChatMessage
+              <ChatMessage
                 key={message.id}
-                role={role}
-                // content prop is omitted in favor of parts
+                role={message.role as 'user' | 'assistant'}
                 displayName={userName}
-                parts={message.parts as any} // ChatMessage parts might expect a slightly different type
-                // toolInvocations omitted in favor of parts
+                parts={message.parts as any}
                 createdAt={extendedMessage.createdAt}
                 metadata={extendedMessage.data || extendedMessage.metadata}
-                />
+              />
             )
           })
         )}
         {isLoading && (
-             <div className="flex gap-3 mb-6">
-                 <div className="w-10 h-10 flex-shrink-0 border border-[#30363d] rounded-full bg-[#0d1117] flex items-center justify-center text-[#c9d1d9]">
-                    <LoadingSpinner />
-                 </div>
-                 <div className="text-[#8b949e] text-sm self-center animate-pulse">Thinking...</div>
-             </div>
+          <div className="flex gap-3 mb-6">
+            <div className="w-10 h-10 flex-shrink-0 border border-border rounded-full bg-background flex items-center justify-center text-foreground">
+              <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </div>
+            <div className="text-muted-foreground text-sm self-center animate-pulse">Thinking...</div>
+          </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="bg-[#0d1117] border-t border-[#30363d] p-4 lg:p-6">
+      <div className="bg-background border-t border-border p-4 lg:p-6">
         <ChatInput
           onSend={handleSendMessage}
           disabled={isLoading}

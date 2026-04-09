@@ -26,8 +26,8 @@ export function ChatInput({
     const textarea = textareaRef.current
     if (textarea) {
       textarea.style.height = 'auto'
-      const height = Math.min(textarea.scrollHeight, 400) // Allow taller growth
-      textarea.style.height = `${Math.max(height, 100)}px` // Min height
+      const height = Math.min(textarea.scrollHeight, 300)
+      textarea.style.height = `${Math.max(height, 80)}px`
     }
   }, [message])
 
@@ -103,7 +103,7 @@ export function ChatInput({
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
               disabled={disabled}
-              className="w-full min-h-[100px] bg-background border-none focus-visible:ring-0 resize-y p-3 text-sm font-mono placeholder:text-muted-foreground/60"
+              className="w-full min-h-[80px] bg-background border-none focus-visible:ring-0 resize-none p-3 text-sm font-mono placeholder:text-muted-foreground/60"
             />
             <div className="flex items-center justify-between px-2 pb-2 bg-background border-t border-border border-dashed pt-2 mx-2 mb-2">
                <div className="flex items-center text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
@@ -118,7 +118,7 @@ export function ChatInput({
             </div>
           </TabsContent>
 
-          <TabsContent value="preview" className="p-4 m-0 min-h-[140px] text-foreground prose prose-invert prose-sm max-w-none bg-background">
+          <TabsContent value="preview" className="p-4 m-0 min-h-[80px] text-foreground prose prose-invert prose-sm max-w-none bg-background">
              {message ? (
                <div className="whitespace-pre-wrap">{message}</div>
              ) : (
@@ -133,9 +133,10 @@ export function ChatInput({
            <Button
              onClick={handleSend}
              disabled={disabled || !message.trim()}
-             className="bg-[#238636] hover:bg-[#2ea043] text-white font-semibold px-4 py-1.5 h-auto text-sm"
+             className="bg-[#238636] hover:bg-[#2ea043] text-white font-semibold px-4 py-1.5 h-auto text-sm gap-1.5"
            >
-             Comment
+             <Send className="w-3.5 h-3.5" />
+             Send
            </Button>
       </div>
     </div>
