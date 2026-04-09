@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, ReactNode } from 'react'
+import { useState, ReactNode, useEffect } from 'react'
 import { Header } from './Header'
 import { Sidebar } from './Sidebar'
 import { MobileSidebar } from './MobileSidebar'
@@ -51,6 +51,18 @@ export function ChatLayoutShell({ children, user }: ChatLayoutShellProps) {
       console.error('Failed to rename chat:', error)
     }
   }
+
+  // Cmd+K / Ctrl+K → new chat
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        handleNewChat()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
 
   const formattedChats = chats.map(chat => ({
     id: chat.id,

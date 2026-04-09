@@ -126,9 +126,10 @@ export default function ChatDetailPage({ params }: ChatPageProps) {
     <>
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
         {messages.length === 0 ? (
-          <ChatEmptyState 
+          <ChatEmptyState
             title="No messages yet"
             description="Start the conversation!"
+            onSuggest={handleSendMessage}
           />
         ) : (
           messages.map((message) => {
