@@ -1,10 +1,14 @@
 import { createClient } from "safety-agent";
 
+// SAFETY: This module fails open by design. If SuperAgent is unavailable or slow
+// (>800ms), the request proceeds. This is intentional — GitHub management ops should
+// not be blocked by a safety service outage. Adjust the timeout or add stricter
+// enforcement here if needed for production hardening.
 /**
  * SuperAgent Safety Client
- * 
+ *
  * Configured with:
- * - Automatic Fallback: Switches to backup endpoint on timeout/error.
+ * - Automatic Fallback: disabled (fallback endpoint returns invalid JSON).
  * - Usage Tracking: (Optional) via SUPERAGENT_API_KEY.
  */
 export const safetyClient = createClient({

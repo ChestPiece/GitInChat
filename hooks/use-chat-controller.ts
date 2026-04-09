@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useChats } from '@/hooks/use-chats'
 import { useChat } from '@ai-sdk/react'
+import { DefaultChatTransport } from 'ai'
 import { getUser } from '@/lib/auth'
 import * as messagesService from '@/lib/services/messages.client'
 import { toast } from 'sonner'
@@ -18,11 +19,13 @@ export function useChatController() {
   const [initialMessages, setInitialMessages] = useState<UIMessage[]>([])
   const [isInitialLoading, setIsInitialLoading] = useState(false)
 
-  // sendMessage is the v6 API (append was removed in AI SDK v6)
+  // AI SDK v6: transport carries api/body; messages = initial messages; sendMessage is the send API
   const { messages, sendMessage, status, setMessages } = useChat({
-    api: '/api/chat',
-    body: { chatId: currentChatId },
-    initialMessages: initialMessages,
+    transport: new DefaultChatTransport({
+      api: '/api/chat',
+      body: { chatId: currentChatId },
+    }),
+    messages: initialMessages,
     onError: (error: Error) => {
       toast.error('Failed to send message: ' + error.message)
     }
@@ -99,10 +102,7 @@ export function useChatController() {
 
     try {
         // Optimistically add user message via sendMessage
-        await sendMessage({
-            role: 'user',
-            content
-        })
+        await sendMessage({ text: content })
     } catch (error: any) {
         console.error('Error sending message:', error)
         toast.error('Failed to send message: ' + (error.message || 'Unknown error'))
