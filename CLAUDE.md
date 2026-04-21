@@ -40,7 +40,7 @@ GitInChat is an AI-powered GitHub management assistant. Users authenticate via G
 - Real-time events broadcast over Supabase Realtime → `components/realtime-github-listener.tsx`
 
 ### RAG / Embeddings
-- pgvector (`vector(1536)`) for OpenAI embeddings stored in `documents` table
+- pgvector (`vector(1536)`) for OpenAI embeddings stored in `documents` table; chunks are scoped per `user_id` (who ran indexing). `match_documents` RPC requires `filter_user_id`.
 - Indexing: `lib/rag/indexer.ts`, Search: `lib/rag/search.ts`, Embeddings: `lib/rag/embeddings.ts`
 
 ---
@@ -89,7 +89,7 @@ supabase/migrations/         # SQL migrations (versioned)
 |-------|---------|
 | `chats` | Chat sessions per user |
 | `messages` | Messages per chat (role: user/assistant) |
-| `documents` | RAG chunks with `embedding vector(1536)` |
+| `documents` | RAG chunks with `embedding vector(1536)`, `user_id` (indexer owner) for tenant isolation |
 | `github_events` | Incoming GitHub webhook events |
 
 RLS is enabled on all tables. Users can only access their own data.
@@ -99,9 +99,10 @@ RLS is enabled on all tables. Users can only access their own data.
 ## Key Conventions
 
 ### API Routes
-- Chat route uses `streamText` from Vercel AI SDK with 30s timeout
+- Chat route uses `createAgentUIStreamResponse` + `ToolLoopAgent` (30s `maxDuration`); assistant text is persisted once via stream `onFinish`, not per step
 - Always validate chat ownership and run safety check before processing
-- Fetch RAG context in parallel with other setup work
+- Fetch RAG context in parallel with other setup work; pass `session.user.id` into `searchSimilarDocuments`
+- **Local dev:** `POST /api/chat` allows unauthenticated requests only when `NODE_ENV === 'development'` for the session check, but a valid `provider_token` is still required — do not disable that in staging/production
 
 ### AI Tools
 - Defined using `tool()` from `ai` package
