@@ -28,6 +28,7 @@ interface ChatMessageProps {
   toolInvocations?: any[] // Legacy support
   createdAt?: Date | number | string
   metadata?: any
+  isNew?: boolean
 }
 
 export function ChatMessage({
@@ -39,16 +40,18 @@ export function ChatMessage({
   toolInvocations,
   createdAt,
   metadata,
+  isNew = false,
 }: ChatMessageProps) {
   const isUser = role === 'user'
 
   // Extract text content from parts if available, otherwise use content prop
-  const textContent = parts 
+  const textFromParts = parts
     ? parts
         .filter(part => part.type === 'text')
         .map(part => part.text || '')
         .join('')
-    : content || '';
+    : '';
+  const textContent = textFromParts || content || '';
 
   // Extract tool parts from parts array
   const toolParts = parts?.filter(part => 
@@ -57,8 +60,8 @@ export function ChatMessage({
   ) || [];
 
   return (
-    <div className={cn('flex gap-3 mb-6 relative group', isUser && 'flex-row-reverse')}>
-      <Avatar className="w-10 h-10 flex-shrink-0 border border-border">
+    <div className={cn('flex gap-3 mb-4 relative group items-start', isUser && 'flex-row-reverse', isNew && 'message-new')}>
+      <Avatar className={cn("w-9 h-9 flex-shrink-0 border", isUser ? "border-[rgba(31,111,235,0.25)]" : "border-[var(--gh-border)]")}>
         <AvatarFallback
           className={cn(
             'flex items-center justify-center bg-background text-foreground',
@@ -69,36 +72,14 @@ export function ChatMessage({
       </Avatar>
 
       <div className={cn('flex-1 max-w-3xl min-w-0', isUser && 'flex flex-col items-end')}>
-        {/* Comment Box */}
-        <div className="border border-border rounded-md bg-background w-full relative">
-          {/* Header */}
-          <div className={cn(
-            "flex items-center gap-2 px-3 py-2 border-b border-border bg-muted rounded-t-md text-xs text-muted-foreground",
-            isUser ? "flex-row-reverse" : "flex-row"
-          )}>
-            <span className="font-semibold text-foreground">{isUser ? displayName : 'GitHub Agent'}</span>
-            <span>commented</span>
-            <span className="ml-auto"></span>
-          </div>
-
-          {/* Body */}
-          <div className="p-4 text-foreground text-sm overflow-x-auto">
-             {/* Text Content */}
-             <MessageContent content={textContent} />
-
-             {/* Tool Parts & Invocations */}
-             <MessageToolList toolParts={toolParts} toolInvocations={toolInvocations} />
-
-             {/* Metadata Footer */}
-             {!isUser && (
-                <div className="mt-4 pt-4 border-t border-border/50">
-                  <MessageMetadataDisplay 
-                    createdAt={createdAt}
-                    metadata={metadata}
-                  />
-                </div>
-             )}
-          </div>
+        <div className={cn('w-full rounded-xl border px-4 py-3 text-sm overflow-x-auto', isUser ? 'bg-[var(--gh-blue)]/10 border-[rgba(31,111,235,0.2)] text-[var(--gh-text)]' : 'bg-white/[0.02] border-[var(--gh-border)] border-l-[3px] border-l-[var(--gh-green)] text-[var(--gh-text)]')}>
+          <MessageContent content={textContent} />
+          <MessageToolList toolParts={toolParts} toolInvocations={toolInvocations} />
+          {!isUser && (
+            <div className="mt-4 pt-4 border-t border-border/50">
+              <MessageMetadataDisplay createdAt={createdAt} metadata={metadata} />
+            </div>
+          )}
         </div>
       </div>
     </div>

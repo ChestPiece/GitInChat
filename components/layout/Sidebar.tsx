@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { Plus, Book, MoreHorizontal, PanelLeftClose, PanelLeftOpen, Trash2, Edit2 } from 'lucide-react'
+import { Plus, MessageSquare, MoreHorizontal, PanelLeftClose, PanelLeftOpen, Trash2, Edit2 } from 'lucide-react'
 import Link from 'next/link'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
@@ -11,6 +11,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useState } from 'react'
+import { useRef, useEffect } from 'react'
+import { gsap } from '@/lib/gsap'
 
 interface SidebarProps {
   chats?: Array<{
@@ -37,6 +39,17 @@ export function Sidebar({
 }: SidebarProps) {
   const [editingChatId, setEditingChatId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
+  const sidebarRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    if (!sidebarRef.current) return
+    gsap.to(sidebarRef.current, {
+      width: isCollapsed ? 64 : 296,
+      duration: 0.3,
+      ease: 'power2.inOut',
+      overwrite: true,
+    })
+  }, [isCollapsed])
 
   const handleStartRename = (id: string, currentTitle: string) => {
     setEditingChatId(id)
@@ -51,20 +64,21 @@ export function Sidebar({
   }
 
   return (
-    <aside 
-      className={`bg-[#0d1117] border-r border-[#30363d] flex flex-col pt-4 hidden lg:flex h-full transition-all duration-300 ease-in-out ${
-        isCollapsed ? 'w-16' : 'w-[296px]'
-      } ${className}`}
+    <aside
+      ref={sidebarRef}
+      className={`border-r border-[var(--gh-border)] hidden lg:flex lg:flex-col pt-4 h-full overflow-hidden ${isCollapsed ? 'w-16' : 'w-[296px]'} ${className}`}
+      style={{ background: 'linear-gradient(180deg, var(--gh-subtle) 0%, var(--gh-canvas) 100%)' }}
     >
       {/* Top Section */}
       <div className={`px-4 pb-2 flex ${isCollapsed ? 'flex-col items-center gap-4' : 'flex-col'}`}>
         <div className={`flex items-center ${isCollapsed ? 'justify-center w-full' : 'justify-between'} mb-2`}>
-          {!isCollapsed && <h2 className="text-sm font-semibold text-[#c9d1d9]">Your chats</h2>}
+          {!isCollapsed && <h2 className="text-sm font-semibold text-[var(--gh-text)]">Your chats</h2>}
           <Button 
             onClick={onToggleCollapse}
             variant="ghost"
             size="icon"
-            className="text-[#8b949e] hover:text-[#c9d1d9] hover:bg-[#1f2428] h-8 w-8"
+            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="text-[var(--gh-text-muted)] hover:text-[var(--gh-text)] hover:bg-[var(--gh-overlay)] h-8 w-8"
           >
             {isCollapsed ? <PanelLeftOpen className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
           </Button>
@@ -74,7 +88,8 @@ export function Sidebar({
           <Button 
             onClick={onNewChat}
             size="sm" 
-            className="bg-[#238636] hover:bg-[#2ea043] text-white hover:text-white h-7 px-2 text-xs font-semibold gap-1 flex items-center border border-[rgba(240,246,252,0.1)] rounded-md shadow-sm w-full justify-center mb-4"
+            aria-label="Create new chat"
+            className="bg-[var(--gh-green)] hover:bg-[var(--gh-green-hover)] text-white h-7 px-2 text-xs font-semibold gap-1 flex items-center border border-[rgba(240,246,252,0.1)] rounded-md shadow-sm w-full justify-center mb-4 hover:shadow-[0_0_16px_var(--gh-green-glow)]"
           >
             <Plus className="h-3.5 w-3.5 text-white" />
             New
@@ -85,7 +100,8 @@ export function Sidebar({
            <Button 
              onClick={onNewChat}
              size="icon" 
-             className="bg-[#238636] hover:bg-[#2ea043] text-white hover:text-white h-8 w-8 rounded-md shadow-sm"
+             aria-label="Create new chat"
+             className="bg-[var(--gh-green)] hover:bg-[var(--gh-green-hover)] text-white h-8 w-8 rounded-md shadow-sm hover:shadow-[0_0_16px_var(--gh-green-glow)]"
            >
              <Plus className="h-4 w-4 text-white" />
            </Button>
@@ -93,10 +109,12 @@ export function Sidebar({
 
         {!isCollapsed && (
           <div className="relative mb-4">
+            <label htmlFor="chat-search" className="sr-only">Find a chat</label>
             <input 
+              id="chat-search"
               type="text" 
               placeholder="Find a chat..." 
-              className="w-full bg-[#0d1117] border border-[#30363d] rounded-md py-1 px-3 text-sm text-[#c9d1d9] placeholder-[#8b949e] focus:outline-none focus:border-[#58a6ff] focus:ring-1 focus:ring-[#58a6ff] transition-colors"
+              className="w-full bg-[var(--gh-canvas)] border border-[var(--gh-border)] rounded-md py-1 px-3 text-sm text-[var(--gh-text)] placeholder-[var(--gh-text-muted)] focus:outline-none focus:border-[var(--gh-blue)] focus:shadow-[0_0_0_3px_var(--gh-blue-glow)] transition-colors"
             />
           </div>
         )}
@@ -114,25 +132,31 @@ export function Sidebar({
                     value={editTitle}
                     onChange={(e) => setEditTitle(e.target.value)}
                     onBlur={() => handleRenameSubmit(chat.id)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleRenameSubmit(chat.id)}
-                    className="flex-1 bg-[#0d1117] border border-[#30363d] rounded px-1 text-sm text-[#c9d1d9] focus:outline-none focus:border-[#58a6ff]"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        handleRenameSubmit(chat.id)
+                        ;(e.currentTarget as HTMLInputElement).blur()
+                      }
+                    }}
+                    className="flex-1 bg-[var(--gh-canvas)] border border-[var(--gh-border)] rounded px-1 text-sm text-[var(--gh-text)] focus:outline-none focus:border-[var(--gh-blue)]"
                   />
                 </div>
               ) : (
-                <div className={`flex items-center justify-between group rounded-md ${
+                <div className={`flex items-center justify-between group rounded-md border-l-2 ${
                     chat.active 
-                      ? 'bg-[#1f2428]' 
-                      : 'hover:bg-[#161b22]'
+                      ? 'bg-[var(--gh-overlay)] border-l-[var(--gh-green)]' 
+                      : 'hover:bg-[color:var(--gh-subtle)]/60 border-l-transparent'
                   }`}>
                   <Link 
                     href={`/chat/${chat.id}`}
                     className={`flex items-center gap-2 px-2 py-1.5 flex-1 min-w-0 ${
-                      chat.active ? 'text-[#c9d1d9]' : 'text-[#c9d1d9] hover:text-[#58a6ff]'
+                      chat.active ? 'text-[var(--gh-text)]' : 'text-[var(--gh-text)] hover:text-[var(--gh-blue)]'
                     } ${isCollapsed ? 'justify-center' : ''}`}
                     title={chat.title}
                   >
                     <div className="min-w-[16px] flex justify-center">
-                       <Book className={`h-4 w-4 ${chat.active ? 'text-[#c9d1d9]' : 'text-[#8b949e] group-hover:text-[#c9d1d9]'}`} />
+                       <MessageSquare className={`h-4 w-4 ${chat.active ? 'text-[var(--gh-text)]' : 'text-[var(--gh-text-muted)] group-hover:text-[var(--gh-text)]'}`} />
                     </div>
                     {!isCollapsed && (
                       <span className={`truncate font-medium text-sm ${chat.active ? 'font-semibold' : ''}`}>
@@ -144,11 +168,11 @@ export function Sidebar({
                   {!isCollapsed && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 mr-1 text-[#8b949e] hover:text-[#c9d1d9] hover:bg-[#1f2428]">
+                        <Button aria-label="Chat actions" variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 mr-1 text-[var(--gh-text-muted)] hover:text-[var(--gh-text)] hover:bg-[var(--gh-overlay)]">
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-[#161b22] border-[#30363d] text-[#c9d1d9]">
+                      <DropdownMenuContent align="end" className="bg-[var(--gh-subtle)] border-[var(--gh-border)] text-[var(--gh-text)]">
                         <DropdownMenuItem onClick={() => handleStartRename(chat.id, chat.title)}>
                           <Edit2 className="h-3 w-3 mr-2" />
                           Rename
@@ -170,10 +194,11 @@ export function Sidebar({
         </ul>
         
         {!isCollapsed && (
-          <div className="mt-6 pt-4 border-t border-[#30363d] mx-2">
-            <h3 className="text-sm font-semibold text-[#c9d1d9] mb-2">Recent activity</h3>
-             <div className="border border-[#30363d] rounded-md p-4 bg-[#0d1117] mb-2">
-               <p className="text-xs text-[#8b949e] mb-1">When you have chat activity, it will show up here.</p>
+          <div className="mt-6 pt-4 border-t border-[var(--gh-border)] mx-2">
+            <h3 className="text-sm font-semibold text-[var(--gh-text)] mb-2">Recent activity</h3>
+             <div className="border border-dashed border-[var(--gh-border-muted)] rounded-md p-4 bg-[var(--gh-canvas)] mb-2 text-center">
+               <MessageSquare className="h-4 w-4 mx-auto mb-2 text-[var(--gh-text-muted)]" />
+               <p className="text-xs text-[var(--gh-text-muted)] mb-1">When you have chat activity, it will show up here.</p>
              </div>
           </div>
         )}

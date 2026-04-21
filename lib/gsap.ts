@@ -4,6 +4,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { ScrollSmoother } from "gsap/ScrollSmoother"
 import { SplitText } from "gsap/SplitText"
 import { DrawSVGPlugin } from "gsap/DrawSVGPlugin"
+import { Physics2DPlugin } from "gsap/Physics2DPlugin"
 import { Flip } from "gsap/Flip"
 import { ScrambleTextPlugin } from "gsap/ScrambleTextPlugin"
 
@@ -14,6 +15,7 @@ gsap.registerPlugin(
   ScrollSmoother,
   SplitText,
   DrawSVGPlugin,
+  Physics2DPlugin,
   Flip,
   ScrambleTextPlugin
 )
@@ -25,6 +27,7 @@ export {
   ScrollSmoother,
   SplitText,
   DrawSVGPlugin,
+  Physics2DPlugin,
   Flip,
   ScrambleTextPlugin,
 }

@@ -11,6 +11,7 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
+        display: ['"Mona Sans"', 'var(--font-sans)', 'Geist', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         sans: ['var(--font-sans)', 'sans-serif'],
         mono: ['var(--font-mono)', 'monospace'],
       },
@@ -88,10 +89,27 @@ const config: Config = {
             height: '0',
           },
         },
+        'glow-pulse': {
+          '0%, 100%': { boxShadow: '0 0 0 rgba(35,134,54,0)' },
+          '50%': { boxShadow: '0 0 40px rgba(35,134,54,0.25)' },
+        },
+        'dot-pulse': {
+          '0%, 100%': { transform: 'scale(1)', opacity: '0.9' },
+          '50%': { transform: 'scale(1.4)', opacity: '1' },
+        },
+        'scan-x': {
+          '0%': { transform: 'scaleX(0)', transformOrigin: 'left' },
+          '50%': { transform: 'scaleX(1)', transformOrigin: 'left' },
+          '51%': { transform: 'scaleX(1)', transformOrigin: 'right' },
+          '100%': { transform: 'scaleX(0)', transformOrigin: 'right' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'glow-pulse': 'glow-pulse 2s ease-in-out infinite',
+        'dot-pulse': 'dot-pulse 1.2s ease-in-out infinite',
+        'scan-x': 'scan-x 1s linear infinite',
       },
     },
   },

@@ -105,19 +105,20 @@ export function ChatToolInvocation({ toolInvocation }: ChatToolInvocationProps) 
     }
 
     if (toolName === 'getRepositoryFileContent') {
+        const safeResult = result && typeof result === 'object' ? result : {};
         // Error handling is now done above via success check, but keep this for backward compat if tool returns { error } directly
-        if (result.error) {
-            return <div className="text-red-400 text-sm">Error: {result.error}</div>
+        if (safeResult.error) {
+            return <div className="text-red-400 text-sm">Error: {String(safeResult.error)}</div>
         }
         return (
             <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs text-gray-400 px-2">
                    <div className="flex items-center gap-1"><FileCode className="w-4 h-4"/> File Content</div>
-                   {result.truncated && <span className="text-yellow-500">(Truncated)</span>}
+                   {safeResult.truncated && <span className="text-yellow-500">(Truncated)</span>}
                 </div>
                 <div className="bg-[#0d1117] border border-[#30363d] rounded-md p-3 overflow-x-auto">
                     <pre className="text-xs font-mono text-gray-300">
-                        {result.content}
+                        {String(safeResult.content ?? '')}
                     </pre>
                 </div>
             </div>
@@ -153,18 +154,19 @@ export function ChatToolInvocation({ toolInvocation }: ChatToolInvocationProps) 
     }
 
     if (toolName === 'readProjectFile') {
-       if (result.error) {
-           return <div className="text-red-400 text-sm">Error: {result.error}</div>
+       const safeResult = result && typeof result === 'object' ? result : {};
+       if (safeResult.error) {
+           return <div className="text-red-400 text-sm">Error: {String(safeResult.error)}</div>
        }
        return (
            <div className="space-y-2">
                <div className="flex items-center justify-between text-xs text-gray-400 px-2">
                   <div className="flex items-center gap-1"><FileCode className="w-4 h-4"/> File Content: {toolInvocation.args.filePath}</div>
-                  {result.truncated && <span className="text-yellow-500">(Truncated)</span>}
+                  {safeResult.truncated && <span className="text-yellow-500">(Truncated)</span>}
                </div>
                <div className="bg-[#0d1117] border border-[#30363d] rounded-md p-3 overflow-x-auto max-h-[500px] overflow-y-auto custom-scrollbar">
                    <pre className="text-xs font-mono text-gray-300">
-                       {result.content}
+                       {String(safeResult.content ?? '')}
                    </pre>
                </div>
            </div>
@@ -187,7 +189,7 @@ export function ChatToolInvocation({ toolInvocation }: ChatToolInvocationProps) 
     );
   };
 
-  if (state === 'call') {
+  if (state === 'call' || state === 'partial-call') {
     return renderToolCall();
   }
 
@@ -195,32 +197,28 @@ export function ChatToolInvocation({ toolInvocation }: ChatToolInvocationProps) 
   return (
     <div className="my-2">
       <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full">
-        <div className="flex items-center justify-between bg-[#161b22] p-2 rounded-t-md border border-[#30363d]">
+        <div className="flex items-center justify-between bg-white/[0.02] p-2 rounded-t-md border border-[var(--gh-border)] border-l-[3px] border-l-[var(--gh-green)]">
              <div className="flex items-center gap-2">
-                 <Badge variant="outline" className="text-xs border-blue-500/30 text-blue-400 bg-blue-500/10">
+                 <Badge variant="outline" className="text-xs border-[rgba(35,134,54,0.35)] text-[var(--gh-green)] bg-[rgba(35,134,54,0.12)]">
                      Tool: {toolName}
                  </Badge>
              </div>
              <CollapsibleTrigger asChild>
-                 <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-[#30363d]">
+                 <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-[var(--gh-subtle)]/70">
                      {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                      <span className="sr-only">Toggle</span>
                  </Button>
              </CollapsibleTrigger>
         </div>
         <CollapsibleContent>
-             <div className="p-2 border-x border-b border-[#30363d] rounded-b-md bg-[#0d1117]/50 text-sm break-all">
+             <div className="p-2 border-x border-b border-[var(--gh-border)] rounded-b-md bg-[var(--gh-canvas)]/50 text-sm break-all space-y-2">
                 <div className="mb-2 text-xs text-gray-500 font-mono">
                     Arguments: {JSON.stringify(toolInvocation.args)}
                 </div>
+                <div>{renderToolResult(toolInvocation.result)}</div>
              </div>
         </CollapsibleContent>
       </Collapsible>
-      
-      {/* Always show result for core tools, but maybe collapsible? For now, show directly */}
-      <div className="mt-2">
-          {renderToolResult(toolInvocation.result)}
-      </div>
     </div>
   );
 }

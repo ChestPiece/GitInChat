@@ -5,6 +5,7 @@ import { ChatMessage } from '@/components/chat-message'
 import { ChatInput } from '@/components/chat-input'
 import { useChatController } from '@/hooks/use-chat-controller'
 import { ChatEmptyState } from '@/components/chat-empty-state'
+import { gsap } from '@/lib/gsap'
 
 export default function ChatPage() {
   const {
@@ -19,10 +20,20 @@ export default function ChatPage() {
   } = useChatController()
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    const container = scrollContainerRef.current
+    if (!container) return
+    const nearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 140
+    if (nearBottom) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
   }, [messages])
+
+  useEffect(() => {
+    gsap.from('.message-new', { y: 12, autoAlpha: 0, duration: 0.25, ease: 'power2.out' })
+  }, [messages.length])
 
   if (!user || chatsLoading || (isInitialLoading && messages.length === 0)) {
     return (
@@ -37,9 +48,9 @@ export default function ChatPage() {
   return (
     <>
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-6 space-y-4">
         {messages.length === 0 ? (
-          <ChatEmptyState />
+          <ChatEmptyState onSuggest={sendMessage} />
         ) : (
           messages.map((message: any) => (
             <ChatMessage
@@ -51,18 +62,22 @@ export default function ChatPage() {
               toolInvocations={message.toolInvocations}
               createdAt={message.createdAt}
               metadata={message.data || message.metadata}
+              isNew={Boolean(message.id && message.id === messages[messages.length - 1]?.id)}
             />
           ))
         )}
         {isLoading && (
-             <div className="flex gap-3 mb-6">
-                 <div className="w-10 h-10 flex-shrink-0 border border-border rounded-full bg-background flex items-center justify-center text-foreground">
-                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+             <div className="flex gap-3 mb-6 items-center">
+               <div className="w-10 h-10 flex-shrink-0 border border-[var(--gh-border)] rounded-full bg-[var(--gh-canvas)] flex items-center justify-center">
+                 <div className="flex gap-1">
+                   <span className="w-1.5 h-1.5 rounded-full bg-[var(--gh-green)] animate-dot-pulse" />
+                   <span className="w-1.5 h-1.5 rounded-full bg-[var(--gh-green)] animate-dot-pulse [animation-delay:120ms]" />
+                   <span className="w-1.5 h-1.5 rounded-full bg-[var(--gh-green)] animate-dot-pulse [animation-delay:240ms]" />
                  </div>
-                 <div className="text-muted-foreground text-sm self-center animate-pulse">Thinking...</div>
+               </div>
+               <div className="h-1 w-40 bg-[var(--gh-subtle)] overflow-hidden rounded">
+                 <div className="scan-bar h-full bg-[var(--gh-green)] origin-left animate-scan-x" />
+               </div>
              </div>
         )}
         <div ref={messagesEndRef} />

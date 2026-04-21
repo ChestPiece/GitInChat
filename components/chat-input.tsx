@@ -59,7 +59,9 @@ export function ChatInput({
       }
 
       // Focus the textarea
+      e.preventDefault()
       textareaRef.current?.focus()
+      setMessage((prev) => prev + e.key)
     }
 
     document.addEventListener('keydown', handleGlobalKeyDown)
@@ -75,7 +77,7 @@ export function ChatInput({
 
   return (
     <div className="w-full">
-      <div className="border border-input rounded-md bg-background overflow-hidden relative focus-within:ring-2 focus-within:ring-ring focus-within:border-ring transition-shadow">
+      <div className="border rounded-md overflow-hidden relative backdrop-blur bg-[var(--gh-subtle)]/60 border-[var(--gh-border)] focus-within:border-[var(--gh-blue)] focus-within:shadow-[0_0_0_3px_var(--gh-blue-glow)] transition-shadow">
         {/* Header Tabs */}
         <Tabs defaultValue="write" className="w-full">
           <div className="bg-muted/40 border-b border-border px-2 pt-2">
@@ -111,10 +113,10 @@ export function ChatInput({
                  <span>Attach files</span>
                </div>
                {/* Markdown hint */}
-               <a href="#" className="hidden sm:flex items-center text-xs text-muted-foreground hover:text-blue-500 transition-colors">
+               <button type="button" className="hidden sm:flex items-center text-xs text-muted-foreground hover:text-blue-500 transition-colors">
                  <svg className="w-3.5 h-3.5 mr-1" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M14.85 3H1.15C.52 3 0 3.52 0 4.15v7.69C0 12.48.52 13 1.15 13h13.69c.64 0 1.15-.52 1.15-1.15V4.15C16 3.52 15.48 3 14.85 3zM9 11H7V8L5.5 9.92 4 8v3H2V5h2l1.5 2L7 5h2v6zm2.99.5L9.5 8H11V5h2v3h1.5l-2.51 3.5z"></path></svg>
                  Markdown supported
-               </a>
+               </button>
             </div>
           </TabsContent>
 
@@ -133,9 +135,9 @@ export function ChatInput({
            <Button
              onClick={handleSend}
              disabled={disabled || !message.trim()}
-             className="bg-[#238636] hover:bg-[#2ea043] text-white font-semibold px-4 py-1.5 h-auto text-sm gap-1.5"
+             className="group bg-[var(--gh-green)] hover:bg-[var(--gh-green-hover)] text-white font-semibold px-4 py-1.5 h-auto text-sm gap-1.5 hover:shadow-[0_0_16px_var(--gh-green-glow)]"
            >
-             <Send className="w-3.5 h-3.5" />
+             <Send className="w-3.5 h-3.5 transition-transform duration-200 group-hover:rotate-[15deg]" />
              Send
            </Button>
       </div>

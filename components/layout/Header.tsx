@@ -14,6 +14,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import Link from 'next/link'
 import { signOut } from '@/lib/auth'
 import { useToast } from '@/components/ui/use-toast'
+import { gsap, useGSAP } from '@/lib/gsap'
+import { useRef } from 'react'
 
 interface HeaderProps {
   user?: {
@@ -26,24 +28,28 @@ interface HeaderProps {
 
 export function Header({ user, onMenuClick }: HeaderProps) {
   const { toast } = useToast()
+  const headerRef = useRef<HTMLElement>(null)
+  useGSAP(() => {
+    gsap.to('.notif-dot', { scale: 1.4, repeat: -1, yoyo: true, duration: 1.2, ease: "sine.inOut" })
+  }, { scope: headerRef })
 
   const handleSetStatus = () => {
     toast({
       description: "Status updated successfully",
       duration: 2000,
-      className: "bg-[#1f6feb] text-white border-none"
+      className: "bg-[var(--gh-blue)] text-white border-none"
     })
   }
 
   return (
-    <header className="h-16 bg-[#161b22] border-b border-[#30363d] flex items-center justify-between px-4 lg:px-6">
+    <header ref={headerRef} className="h-16 bg-[var(--gh-canvas)]/90 backdrop-blur-md border-b border-transparent flex items-center justify-between px-4 lg:px-6" style={{ borderImage: 'linear-gradient(90deg, transparent 0%, #30363d 20%, #30363d 80%, transparent 100%) 1' }}>
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" className="lg:hidden text-[#c9d1d9] hover:bg-[#1f2428] hover:text-white" onClick={onMenuClick}>
+        <Button aria-label="Open navigation menu" variant="ghost" size="icon" className="lg:hidden text-[var(--gh-text)] hover:bg-[var(--gh-overlay)] hover:text-white" onClick={onMenuClick}>
           <Menu className="h-6 w-6" />
         </Button>
         <Link href="/chat" className="flex items-center gap-2 text-white font-semibold">
           <Github className="h-8 w-8 text-white" />
-          <span className="hidden lg:inline text-sm font-bold ml-2">GitHub Chat</span>
+          <span className="hidden lg:inline text-sm font-bold ml-2">GitHub Chat</span><span className="hidden lg:inline-flex h-2 w-2 rounded-full bg-[var(--gh-green)] shadow-[0_0_8px_var(--gh-green-glow)]" />
         </Link>
         
         {/* Search Bar - Visual only for now */}
@@ -58,43 +64,43 @@ export function Header({ user, onMenuClick }: HeaderProps) {
         {/* Create New Dropdown */}
         {/* Create New Dropdown - Removed for Chat focus */}
 
-        <Button variant="ghost" size="icon" className="text-[#c9d1d9] hover:text-white hover:bg-transparent relative">
+        <Button aria-label="Notifications" variant="ghost" size="icon" className="text-[var(--gh-text)] hover:text-white hover:bg-transparent relative">
           <Bell className="h-5 w-5" />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-[#1f6feb] rounded-full border-2 border-[#161b22]"></span>
+          <span className="notif-dot absolute top-2 right-2 w-2 h-2 bg-[var(--gh-blue)] rounded-full border-2 border-[var(--gh-canvas)]"></span>
         </Button>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <div className="flex items-center gap-2 hover:bg-[#1f2428] rounded-full pr-3 pl-1 py-1 transition-colors cursor-pointer border border-transparent hover:border-[#30363d]">
+            <button type="button" aria-label="Open user menu" className="flex items-center gap-2 hover:bg-[var(--gh-overlay)] rounded-full pr-3 pl-1 py-1 transition-all cursor-pointer border border-transparent hover:border-[var(--gh-border)] hover:ring-2 hover:ring-[var(--gh-green)]/40">
               <Avatar className="h-8 w-8">
                 <AvatarImage src={user?.image} alt={user?.name} />
-                <AvatarFallback className="bg-[#238636] text-white">
+                <AvatarFallback className="bg-[var(--gh-green)] text-white">
                   {user?.name?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
-              <span className="hidden lg:block text-sm font-medium text-white max-w-[100px] truncate">
+              <span className="hidden lg:block text-sm font-medium text-[var(--gh-text)] max-w-[100px] truncate">
                 {user?.name}
               </span>
-            </div>
+            </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 bg-[#161b22] border-[#30363d] text-[#c9d1d9] mt-2">
+          <DropdownMenuContent align="end" className="w-56 bg-[var(--gh-subtle)] border-[var(--gh-border)] text-[var(--gh-text)] mt-2">
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium leading-none text-white">{user?.name}</p>
-                <p className="text-xs leading-none text-[#8b949e]">{user?.email}</p>
+                <p className="text-xs leading-none text-[var(--gh-text-muted)]">{user?.email}</p>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator className="bg-[#30363d]" />
+            <DropdownMenuSeparator className="bg-[var(--gh-border)]" />
             <DropdownMenuItem 
               onClick={handleSetStatus}
               className="focus:bg-[#1f6feb] focus:text-white cursor-pointer group"
             >
               <div className="flex items-center justify-between w-full">
                 <span>Set status</span>
-                <span className="text-xs text-[#8b949e] group-focus:text-white">⌘E</span>
+                <span className="text-xs text-[var(--gh-text-muted)] group-focus:text-white">⌘E</span>
               </div>
             </DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-[#30363d]" />
+            <DropdownMenuSeparator className="bg-[var(--gh-border)]" />
             <DropdownMenuItem asChild className="focus:bg-[#1f6feb] focus:text-white cursor-pointer">
               <Link href="/profile" className="flex items-center w-full">
                 <User className="mr-2 h-4 w-4" />
@@ -107,9 +113,9 @@ export function Header({ user, onMenuClick }: HeaderProps) {
                 Settings
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-[#30363d]" />
+            <DropdownMenuSeparator className="bg-[var(--gh-border)]" />
             <DropdownMenuItem 
-              className="focus:bg-[#1f6feb] focus:text-white cursor-pointer text-red-400 hover:text-white hover:bg-red-600 focus:bg-red-600"
+              className="focus:text-white cursor-pointer text-red-400 hover:text-white hover:bg-red-600 focus:bg-red-600"
               onClick={() => signOut()}
             >
                <LogOut className="mr-2 h-4 w-4" />
