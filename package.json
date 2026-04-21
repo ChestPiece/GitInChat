@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"next dev\" \"node scripts/dev-webhook.js\"",
+    "dev": "concurrently \"next dev --webpack\" \"node scripts/dev-webhook.js\"",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint ."
