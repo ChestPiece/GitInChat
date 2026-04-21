@@ -1,4 +1,3 @@
-import { createClient } from '@/lib/supabase/client'
 import { SupabaseClient } from '@supabase/supabase-js'
 
 export interface Chat {
@@ -9,10 +8,8 @@ export interface Chat {
   user_id: string
 }
 
-export async function fetchChats(supabaseClient?: SupabaseClient): Promise<Chat[]> {
-  const supabase = supabaseClient || createClient()
-  
-  const { data, error } = await supabase
+export async function fetchChats(supabaseClient: SupabaseClient): Promise<Chat[]> {
+  const { data, error } = await supabaseClient
     .from('chats')
     .select('*')
     .order('updated_at', { ascending: false })
@@ -24,11 +21,9 @@ export async function fetchChats(supabaseClient?: SupabaseClient): Promise<Chat[
 export async function createChat(
   title: string, 
   userId: string,
-  supabaseClient?: SupabaseClient
+  supabaseClient: SupabaseClient
 ): Promise<Chat> {
-  const supabase = supabaseClient || createClient()
-  
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('chats')
     .insert({ 
       title, 
@@ -44,11 +39,9 @@ export async function createChat(
 export async function updateChat(
   id: string, 
   title: string,
-  supabaseClient?: SupabaseClient
+  supabaseClient: SupabaseClient
 ): Promise<void> {
-  const supabase = supabaseClient || createClient()
-  
-  const { error } = await supabase
+  const { error } = await supabaseClient
     .from('chats')
     .update({ title })
     .eq('id', id)
@@ -58,11 +51,9 @@ export async function updateChat(
 
 export async function deleteChat(
   id: string,
-  supabaseClient?: SupabaseClient
+  supabaseClient: SupabaseClient
 ): Promise<void> {
-  const supabase = supabaseClient || createClient()
-  
-  const { error } = await supabase
+  const { error } = await supabaseClient
     .from('chats')
     .delete()
     .eq('id', id)

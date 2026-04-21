@@ -1,6 +1,7 @@
 import { createTool } from '../../create-tool';
 import { z } from 'zod';
 import { getGitHubClient } from '@/lib/github/client';
+import { createClient } from '@/lib/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { generateEmbedding } from '@/lib/rag/embeddings';
 
@@ -20,6 +21,14 @@ export const indexIssuesTool = createTool({
 
   execute: async ({ owner, repo, state = 'open', include_prs = true, limit = 100 }) => {
     const octokit = await getGitHubClient();
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+    if (userError || !user) {
+      return { success: false, error: 'Not authenticated.' };
+    }
 
     const { data: repoData } = await octokit.rest.repos.get({ owner, repo });
     const repoId = repoData.id;
@@ -29,6 +38,7 @@ export const indexIssuesTool = createTool({
     await supabaseAdmin
       .from('documents')
       .delete()
+      .eq('user_id', user.id)
       .eq('metadata->>repo_id', repoId.toString())
       .eq('metadata->>type', 'issue');
 
@@ -54,6 +64,7 @@ export const indexIssuesTool = createTool({
       try {
         const embedding = await generateEmbedding(text);
         const { error } = await supabaseAdmin.from('documents').insert({
+          user_id: user.id,
           content: text,
           embedding,
           metadata: {
@@ -105,12 +116,22 @@ export const searchIssuesTool = createTool({
   inputSchema: searchIssuesSchema,
 
   execute: async ({ query, repo, limit = 5, threshold = 0.65 }) => {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+    if (userError || !user) {
+      return { success: false, error: 'Not authenticated.' };
+    }
+
     const embedding = await generateEmbedding(query);
 
     const { data, error } = await supabaseAdmin.rpc('match_documents', {
       query_embedding: embedding,
       match_threshold: threshold,
-      match_count: limit * 3, // over-fetch then filter by type
+      match_count: limit * 3,
+      filter_user_id: user.id,
     });
 
     if (error) {

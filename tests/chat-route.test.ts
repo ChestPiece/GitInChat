@@ -32,6 +32,21 @@ vi.mock('../lib/rag/search', () => ({
   searchSimilarDocuments: mocks.searchSimilarDocuments,
 }));
 
+// Agent pulls the tools barrel, which imports modules that use supabaseAdmin — stub before route loads.
+vi.mock('../lib/supabase/admin', () => ({
+  supabaseAdmin: {
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      insert: vi.fn().mockReturnThis(),
+      delete: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      rpc: vi.fn().mockResolvedValue({ data: [], error: null }),
+    })),
+    rpc: vi.fn().mockResolvedValue({ data: [], error: null }),
+    channel: vi.fn(() => ({ send: vi.fn().mockResolvedValue('ok') })),
+  },
+}));
+
 vi.mock('ai', async (importOriginal) => {
   const actual = await importOriginal<typeof import('ai')>();
   return {
@@ -62,6 +77,7 @@ describe('POST /api/chat', () => {
     mocks.searchSimilarDocuments.mockResolvedValue([]); // no RAG context
     mocks.createMessage.mockResolvedValue(undefined);
     mocks.createAgentUIStreamResponse.mockReturnValue(new Response('ok', { status: 200 }));
+    mocks.getSession.mockResolvedValue({ data: { session: makeSession() } });
   });
 
   it('returns 401 when there is no session', async () => {
@@ -82,7 +98,6 @@ describe('POST /api/chat', () => {
   });
 
   it('returns 403 when user does not own the chat', async () => {
-    mocks.getSession.mockResolvedValue({ data: { session: makeSession() } });
     mocks.fromChats.mockReturnValue({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
@@ -96,7 +111,6 @@ describe('POST /api/chat', () => {
   });
 
   it('returns 400 when safety check blocks the message', async () => {
-    mocks.getSession.mockResolvedValue({ data: { session: makeSession() } });
     mocks.fromChats.mockReturnValue({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
@@ -113,18 +127,21 @@ describe('POST /api/chat', () => {
   });
 
   it('injects RAG context as system message when docs are found', async () => {
-    mocks.getSession.mockResolvedValue({ data: { session: makeSession() } });
     mocks.fromChats.mockReturnValue({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({ data: { user_id: 'user-1' }, error: null }),
     });
     mocks.searchSimilarDocuments.mockResolvedValue([
-      { content: 'const x = 1;', similarity: 0.9, metadata: { repo_name: 'owner/repo', file_path: 'index.ts' } },
+      {
+        content: 'const x = 1;',
+        similarity: 0.9,
+        metadata: { repo_name: 'owner/repo', file_path: 'index.ts' },
+      },
     ]);
 
-    let capturedMessages: any;
-    mocks.createAgentUIStreamResponse.mockImplementation(({ uiMessages }: any) => {
+    let capturedMessages: { role: string; content?: string }[];
+    mocks.createAgentUIStreamResponse.mockImplementation(({ uiMessages }: { uiMessages: typeof capturedMessages }) => {
       capturedMessages = uiMessages;
       return new Response('ok');
     });
@@ -134,12 +151,15 @@ describe('POST /api/chat', () => {
       makeRequest({ messages: [{ role: 'user', content: 'what does index.ts do?' }], chatId: 'chat-123' })
     );
 
-    expect(capturedMessages[0].role).toBe('system');
-    expect(capturedMessages[0].content).toContain('Relevant Code Context');
+    expect(mocks.searchSimilarDocuments).toHaveBeenCalledWith(
+      'what does index.ts do?',
+      expect.objectContaining({ userId: 'user-1', limit: 5, threshold: 0.7 })
+    );
+    expect(capturedMessages![0].role).toBe('system');
+    expect(capturedMessages![0].content).toContain('Relevant Code Context');
   });
 
   it('proceeds (fail open) when RAG search throws', async () => {
-    mocks.getSession.mockResolvedValue({ data: { session: makeSession() } });
     mocks.fromChats.mockReturnValue({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
@@ -147,8 +167,8 @@ describe('POST /api/chat', () => {
     });
     mocks.searchSimilarDocuments.mockRejectedValue(new Error('pgvector down'));
 
-    let capturedMessages: any;
-    mocks.createAgentUIStreamResponse.mockImplementation(({ uiMessages }: any) => {
+    let capturedMessages: { role: string }[];
+    mocks.createAgentUIStreamResponse.mockImplementation(({ uiMessages }: { uiMessages: typeof capturedMessages }) => {
       capturedMessages = uiMessages;
       return new Response('ok');
     });
@@ -157,14 +177,11 @@ describe('POST /api/chat', () => {
     const res = await POST(
       makeRequest({ messages: [{ role: 'user', content: 'hello' }], chatId: 'chat-123' })
     );
-    // Should still succeed despite RAG failure
     expect(res.status).toBe(200);
-    // No system message injected
-    expect(capturedMessages[0].role).toBe('user');
+    expect(capturedMessages![0].role).toBe('user');
   });
 
   it('saves user message to DB on valid request', async () => {
-    mocks.getSession.mockResolvedValue({ data: { session: makeSession() } });
     mocks.fromChats.mockReturnValue({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
@@ -177,33 +194,81 @@ describe('POST /api/chat', () => {
     );
 
     expect(mocks.createMessage).toHaveBeenCalledWith(
-      'chat-123', 'user', 'list my repos', expect.anything()
+      'chat-123',
+      'user',
+      'list my repos',
+      expect.anything()
     );
   });
 
-  it('does not save a second assistant message when onStepFinish fires without text', async () => {
-    // onStepFinish with empty text should NOT call createMessage
-    mocks.getSession.mockResolvedValue({ data: { session: makeSession() } });
+  it('does not save assistant message when onFinish has no text', async () => {
     mocks.fromChats.mockReturnValue({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({ data: { user_id: 'user-1' }, error: null }),
     });
 
-    let onStepFinishCallback: ((args: any) => Promise<void>) | undefined;
-    mocks.createAgentUIStreamResponse.mockImplementation(({ onStepFinish }: any) => {
-      onStepFinishCallback = onStepFinish;
-      return new Response('ok');
-    });
-
-    const { POST } = await import('../app/api/chat/route');
-    await POST(
-      makeRequest({ messages: [{ role: 'user', content: 'hi' }], chatId: 'chat-123' })
+    let onFinishCallback: ((args: {
+      responseMessage: { parts?: { type: string; text?: string }[] };
+      isAborted: boolean;
+    }) => Promise<void>) | undefined;
+    mocks.createAgentUIStreamResponse.mockImplementation(
+      ({
+        onFinish,
+      }: {
+        onFinish?: typeof onFinishCallback;
+      }) => {
+        onFinishCallback = onFinish;
+        return new Response('ok');
+      }
     );
 
-    // Simulate a tool-call-only step (no text)
-    await onStepFinishCallback?.({ text: '', toolCalls: [{}] });
-    const assistantSaves = mocks.createMessage.mock.calls.filter(c => c[1] === 'assistant');
+    const { POST } = await import('../app/api/chat/route');
+    await POST(makeRequest({ messages: [{ role: 'user', content: 'hi' }], chatId: 'chat-123' }));
+
+    await onFinishCallback?.({
+      responseMessage: { parts: [] },
+      isAborted: false,
+    });
+    const assistantSaves = mocks.createMessage.mock.calls.filter((c) => c[1] === 'assistant');
     expect(assistantSaves.length).toBe(0);
+  });
+
+  it('saves assistant message once when onFinish includes text', async () => {
+    mocks.fromChats.mockReturnValue({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: { user_id: 'user-1' }, error: null }),
+    });
+
+    let onFinishCallback: ((args: {
+      responseMessage: { parts?: { type: string; text?: string }[] };
+      isAborted: boolean;
+    }) => Promise<void>) | undefined;
+    mocks.createAgentUIStreamResponse.mockImplementation(
+      ({
+        onFinish,
+      }: {
+        onFinish?: typeof onFinishCallback;
+      }) => {
+        onFinishCallback = onFinish;
+        return new Response('ok');
+      }
+    );
+
+    const { POST } = await import('../app/api/chat/route');
+    await POST(makeRequest({ messages: [{ role: 'user', content: 'hi' }], chatId: 'chat-123' }));
+
+    await onFinishCallback?.({
+      responseMessage: { parts: [{ type: 'text', text: 'Final answer.' }] },
+      isAborted: false,
+    });
+
+    expect(mocks.createMessage).toHaveBeenCalledWith(
+      'chat-123',
+      'assistant',
+      'Final answer.',
+      expect.anything()
+    );
   });
 });

@@ -1,11 +1,13 @@
 import { createTool } from '@/lib/ai/create-tool';
 import { z } from 'zod';
+import { createClient } from '@/lib/supabase/server';
 import { getGitHubClient } from '@/lib/github/client';
-import { indexRepository, reindexFiles } from '@/lib/rag/indexer';
+import { indexRepository } from '@/lib/rag/indexer';
 import { getIndexStats } from '@/lib/rag/search';
 
 export const indexRepositoryTool = createTool({
-  description: 'Index a GitHub repository to enable code search and context retrieval. This allows the AI to understand and reference code from the repository.',
+  description:
+    'Index a GitHub repository to enable code search and context retrieval. This allows the AI to understand and reference code from the repository.',
   inputSchema: z.object({
     owner: z.string().describe('Repository owner (username or organization)'),
     repo: z.string().describe('Repository name'),
@@ -13,9 +15,22 @@ export const indexRepositoryTool = createTool({
   }),
   execute: async ({ owner, repo, branch }) => {
     try {
+      const supabase = await createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Not authenticated — cannot index repository.',
+        };
+      }
+
       const octokit = await getGitHubClient();
-      
+
       const result = await indexRepository(octokit, owner, repo, {
+        userId,
         branch,
         filePatterns: [
           /\.(ts|tsx|js|jsx)$/,
@@ -39,24 +54,41 @@ export const indexRepositoryTool = createTool({
           errors: result.errors.length,
         },
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       return {
         success: false,
-        error: error.message,
+        error: message,
       };
     }
   },
 });
 
 export const getIndexStatsTool = createTool({
-  description: 'Get statistics about indexed repositories and code chunks in the RAG system',
+  description:
+    'Get statistics about indexed repositories and code chunks in the RAG system for your account',
   inputSchema: z.object({
-    repoName: z.string().optional().describe('Specific repository to get stats for (format: owner/repo)'),
+    repoName: z
+      .string()
+      .optional()
+      .describe('Specific repository to get stats for (format: owner/repo)'),
   }),
   execute: async ({ repoName }) => {
     try {
-      const stats = await getIndexStats(repoName);
-      
+      const supabase = await createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      if (!userId) {
+        return {
+          success: false,
+          error: 'Not authenticated.',
+        };
+      }
+
+      const stats = await getIndexStats(repoName, userId);
+
       if (repoName) {
         return {
           repository: repoName,
@@ -68,16 +100,18 @@ export const getIndexStatsTool = createTool({
       return {
         totalChunks: stats.totalDocuments,
         totalRepositories: stats.totalRepos,
-        repositories: stats.repoBreakdown?.map(r => ({
-          name: r.repo_name,
-          chunks: r.count,
-        })) || [],
+        repositories:
+          stats.repoBreakdown?.map((r) => ({
+            name: r.repo_name,
+            chunks: r.count,
+          })) || [],
         message: `Found ${stats.totalRepos} indexed repositories with ${stats.totalDocuments} total code chunks`,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       return {
         success: false,
-        error: error.message,
+        error: message,
       };
     }
   },

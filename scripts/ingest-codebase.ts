@@ -10,8 +10,17 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY; 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
+const RAG_INGEST_USER_ID = process.env.RAG_INGEST_USER_ID;
+
 if (!SUPABASE_URL || !SUPABASE_KEY || !OPENAI_API_KEY) {
   console.error("Missing environment variables. Check .env");
+  process.exit(1);
+}
+
+if (!RAG_INGEST_USER_ID) {
+  console.error(
+    "Set RAG_INGEST_USER_ID to a valid auth.users id — required for documents.user_id (RAG isolation)."
+  );
   process.exit(1);
 }
 
@@ -66,6 +75,7 @@ async function ingestFile(filePath) {
       const embedding = embeddingResponse.data[0].embedding;
 
       const { error } = await supabase.from('documents').insert({
+        user_id: RAG_INGEST_USER_ID,
         content: chunkContent,
         metadata: { filePath: relativePath },
         embedding

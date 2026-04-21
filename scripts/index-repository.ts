@@ -3,6 +3,7 @@ import { resolve } from 'path';
 
 config({ path: resolve(process.cwd(), '.env') });
 
+import { createClient } from '@/lib/supabase/server';
 import { getGitHubClient } from '@/lib/github/client';
 import { indexRepository } from '@/lib/rag/indexer';
 
@@ -22,12 +23,23 @@ async function main() {
   console.log(`   Branch: ${branch || 'HEAD'}\n`);
 
   try {
-    // Get authenticated GitHub client
-    // Note: This requires a valid GitHub OAuth session
-    // For manual indexing, you may want to use a Personal Access Token instead
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+    const userId = user?.id;
+    if (userError || !userId) {
+      console.error(
+        'No Supabase user session. Sign in via the app first, or use a script that sets user context.'
+      );
+      process.exit(1);
+    }
+
     const octokit = await getGitHubClient();
 
     const result = await indexRepository(octokit, owner, repo, {
+      userId,
       branch,
       filePatterns: [
         /\.(ts|tsx|js|jsx)$/,      // TypeScript/JavaScript

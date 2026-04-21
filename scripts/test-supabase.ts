@@ -37,12 +37,12 @@ async function testSupabase() {
     
     // Test vector extension
     console.log('\nTesting Vector Extension...');
-    const { error: vectorError } = await supabaseAdmin
-      .rpc('match_documents', {
-        query_embedding: Array(1536).fill(0),
-        match_threshold: 0.5,
-        match_count: 1,
-      });
+    const { error: vectorError } = await supabaseAdmin.rpc('match_documents', {
+      query_embedding: Array(1536).fill(0),
+      match_threshold: 0.5,
+      match_count: 1,
+      filter_user_id: '00000000-0000-0000-0000-000000000001',
+    });
     
     if (vectorError) {
       console.log('⚠️  Vector search function not working:', vectorError.message);

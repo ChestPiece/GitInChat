@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "concurrently \"next dev\" \"node scripts/dev-webhook.js\"",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint ."
   },

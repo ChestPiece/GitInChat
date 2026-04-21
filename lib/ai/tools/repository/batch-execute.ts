@@ -3,8 +3,8 @@ import { z } from 'zod';
 import { getGitHubClient } from '@/lib/github/client';
 
 const batchExecuteSchema = z.object({
-  operation: z.enum(['archive', 'unarchive', 'star', 'unstar', 'delete']).describe(
-    'Operation to perform on each repository'
+  operation: z.enum(['archive', 'unarchive', 'star', 'unstar']).describe(
+    'Operation to perform on each repository (use deleteRepository for single-repo delete with confirmation)'
   ),
   repositories: z.array(z.string()).describe(
     'List of "owner/repo" strings to operate on'
@@ -25,7 +25,7 @@ async function executeOp(
   operation: string,
   owner: string,
   repo: string
-): Promise<{ headers: Record<string, string> }> {
+) {
   switch (operation) {
     case 'archive':
       return octokit.rest.repos.update({ owner, repo, archived: true });
@@ -35,8 +35,6 @@ async function executeOp(
       return octokit.rest.activity.starRepoForAuthenticatedUser({ owner, repo });
     case 'unstar':
       return octokit.rest.activity.unstarRepoForAuthenticatedUser({ owner, repo });
-    case 'delete':
-      return octokit.rest.repos.delete({ owner, repo });
     default:
       throw new Error(`Unknown operation: ${operation}`);
   }
@@ -44,7 +42,7 @@ async function executeOp(
 
 export const batchExecuteRepositoryOps = createTool({
   description:
-    'Execute a management operation (archive, unarchive, star, unstar, delete) across multiple repositories. Use when the user wants to perform the same action on many repos (>3). Shows streaming progress and respects GitHub rate limits.',
+    'Execute a management operation (archive, unarchive, star, unstar) across multiple repositories. Use deleteRepository for deletes (per-repo confirmation). Use when the user wants the same action on many repos (>3). Respects GitHub rate limits.',
 
   inputSchema: batchExecuteSchema,
 
@@ -90,9 +88,12 @@ export const batchExecuteRepositoryOps = createTool({
             10
           );
           if (remaining < 100) {
-            // Pause and surface a warning — don't continue hammering the API
-            const completed = results.filter(r => r.success).length + 1;
             results.push({ repo: fullName, success: true });
+            const completed = results.filter(r => r.success).length;
+            const processedNames = new Set(
+              results.filter(r => r.success).map(r => r.repo)
+            );
+            const remainingRepos = repositories.filter(r => !processedNames.has(r));
             return {
               success: true,
               data: {
@@ -102,7 +103,8 @@ export const batchExecuteRepositoryOps = createTool({
                 completed,
                 total: repositories.length,
                 results,
-                message: `Rate limit low (${remaining} remaining) — paused after ${completed} of ${repositories.length}. Run again to continue from where we left off.`,
+                remaining_repositories: remainingRepos,
+                message: `Rate limit low (${remaining} remaining) — paused after ${completed} of ${repositories.length}. Call again with operation "${operation}" and repositories: ${JSON.stringify(remainingRepos)} to continue.`,
               },
             };
           }

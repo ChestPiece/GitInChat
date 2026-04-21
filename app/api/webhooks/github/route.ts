@@ -54,8 +54,8 @@ export async function POST(req: Request) {
     }
 
     return new Response("OK", { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[GitHub Webhook] Error processing request:", error);
-    return new Response(`Error: ${error.message}`, { status: 500 });
+    return new Response("Internal server error", { status: 500 });
   }
 }

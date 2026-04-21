@@ -11,19 +11,21 @@ interface IndexResult {
 
 /**
  * Index a GitHub repository by fetching all code files and storing them
- * with embeddings in the documents table.
+ * with embeddings in the documents table (scoped to userId for RAG isolation).
  */
 export async function indexRepository(
   octokit: Octokit,
   owner: string,
   repo: string,
   options: {
+    userId: string;
     branch?: string;
     filePatterns?: RegExp[];
     maxFileSize?: number;
-  } = {}
+  }
 ): Promise<IndexResult> {
   const {
+    userId,
     branch = 'HEAD',
     filePatterns = [/\.(ts|tsx|js|jsx|py|java|go|rs|md|txt)$/],
     maxFileSize = 100000, // 100KB
@@ -37,13 +39,11 @@ export async function indexRepository(
   };
 
   try {
-    // Get repository info
     const { data: repoData } = await octokit.rest.repos.get({ owner, repo });
     const repoId = repoData.id;
 
     console.log(`📥 Indexing repository: ${owner}/${repo}`);
 
-    // Get repository tree
     const { data: tree } = await octokit.rest.git.getTree({
       owner,
       repo,
@@ -51,7 +51,6 @@ export async function indexRepository(
       recursive: 'true',
     });
 
-    // Filter for code files
     const codeFiles = tree.tree.filter((item) => {
       if (item.type !== 'blob' || !item.path) return false;
       return filePatterns.some((pattern) => pattern.test(item.path!));
@@ -60,17 +59,16 @@ export async function indexRepository(
     result.totalFiles = codeFiles.length;
     console.log(`📄 Found ${codeFiles.length} code files to index`);
 
-    // Delete existing documents for this repo (fresh indexing)
     const { error: deleteError } = await supabaseAdmin
       .from('documents')
       .delete()
+      .eq('user_id', userId)
       .eq('metadata->>repo_id', repoId.toString());
 
     if (deleteError) {
       console.warn('⚠️  Could not delete old documents:', deleteError.message);
     }
 
-    // Process files in batches
     const batchSize = 5;
     for (let i = 0; i < codeFiles.length; i += batchSize) {
       const batch = codeFiles.slice(i, i + batchSize);
@@ -80,7 +78,6 @@ export async function indexRepository(
           try {
             if (!file.path) return;
 
-            // Get file content
             const { data: content } = await octokit.rest.repos.getContent({
               owner,
               repo,
@@ -92,24 +89,21 @@ export async function indexRepository(
 
             const decoded = Buffer.from(content.content, 'base64').toString('utf-8');
 
-            // Skip files that are too large
             if (decoded.length > maxFileSize) {
               result.errors.push(`File too large: ${file.path} (${decoded.length} bytes)`);
               return;
             }
 
-            // Chunk the content for better embedding quality
             const chunks = chunkText(decoded, 1000);
 
-            // Generate embeddings for all chunks
             for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
               const chunk = chunks[chunkIndex];
               const embedding = await generateEmbedding(chunk);
 
-              // Store in database
               const { error: insertError } = await supabaseAdmin
                 .from('documents')
                 .insert({
+                  user_id: userId,
                   content: chunk,
                   embedding: embedding,
                   metadata: {
@@ -132,8 +126,9 @@ export async function indexRepository(
             }
 
             result.indexedFiles++;
-          } catch (error: any) {
-            result.errors.push(`Error processing ${file.path}: ${error.message}`);
+          } catch (error: unknown) {
+            const msg = error instanceof Error ? error.message : String(error);
+            result.errors.push(`Error processing ${file.path}: ${msg}`);
           }
         })
       );
@@ -153,19 +148,21 @@ export async function indexRepository(
     }
 
     return result;
-  } catch (error: any) {
-    console.error('❌ Indexing failed:', error.message);
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error('❌ Indexing failed:', msg);
     throw error;
   }
 }
 
 /**
- * Re-index specific files in a repository (useful for webhook updates)
+ * Re-index specific files in a repository (user-scoped).
  */
 export async function reindexFiles(
   octokit: Octokit,
   owner: string,
   repo: string,
+  userId: string,
   filePaths: string[]
 ): Promise<void> {
   console.log(`🔄 Re-indexing ${filePaths.length} files in ${owner}/${repo}`);
@@ -175,14 +172,13 @@ export async function reindexFiles(
 
   for (const filePath of filePaths) {
     try {
-      // Delete old chunks for this file
       await supabaseAdmin
         .from('documents')
         .delete()
+        .eq('user_id', userId)
         .eq('metadata->>repo_id', repoId.toString())
         .eq('metadata->>file_path', filePath);
 
-      // Get new content
       const { data: content } = await octokit.rest.repos.getContent({
         owner,
         repo,
@@ -194,12 +190,12 @@ export async function reindexFiles(
       const decoded = Buffer.from(content.content, 'base64').toString('utf-8');
       const chunks = chunkText(decoded, 1000);
 
-      // Re-index
       for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
         const chunk = chunks[chunkIndex];
         const embedding = await generateEmbedding(chunk);
 
         await supabaseAdmin.from('documents').insert({
+          user_id: userId,
           content: chunk,
           embedding: embedding,
           metadata: {
@@ -214,8 +210,9 @@ export async function reindexFiles(
       }
 
       console.log(`✅ Re-indexed: ${filePath}`);
-    } catch (error: any) {
-      console.error(`❌ Error re-indexing ${filePath}:`, error.message);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error(`❌ Error re-indexing ${filePath}:`, msg);
     }
   }
 }

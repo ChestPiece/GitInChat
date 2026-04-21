@@ -34,12 +34,12 @@ async function testRAG() {
   console.log('\n2️⃣ Testing match_documents RPC function...');
   try {
    const testEmbedding = Array(1536).fill(0);
-    const { data, error } = await supabaseAdmin
-      .rpc('match_documents', {
-        query_embedding: testEmbedding,
-        match_threshold: 0.5,
-        match_count: 3,
-      });
+    const { data, error } = await supabaseAdmin.rpc('match_documents', {
+      query_embedding: testEmbedding,
+      match_threshold: 0.5,
+      match_count: 3,
+      filter_user_id: '00000000-0000-0000-0000-000000000001',
+    });
 
     if (error) {
       console.log('   ❌ match_documents RPC error:', error.message);

@@ -16,7 +16,7 @@ export const agentTools = tools;
 export const agentSystemPrompt = GITHUB_AGENT_SYSTEM_PROMPT;
 
 /**
- * @deprecated Use streamText with agentModel and agentTools instead
+ * Used with `createAgentUIStreamResponse` from the AI SDK. Alternative: `streamText` + `toUIMessageStreamResponse` for custom control.
  */
 export const githubAgent = new ToolLoopAgent({
   model: agentModel,
@@ -28,7 +28,7 @@ export const githubAgent = new ToolLoopAgent({
   
   instructions: agentSystemPrompt,
   tools: agentTools,
-  stopWhen: stepCountIs(20),
+  stopWhen: stepCountIs(5),
 });
 
 export type { ToolLoopAgent };
