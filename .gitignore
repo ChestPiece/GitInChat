@@ -17,3 +17,13 @@ node_modules/
 .agent/
 .refactor/
 docs/
+
+# Local IDE / agent state
+.cursor/
+.claude/settings.local.json
+
+# Local scratch exports
+pokemonCollection-*.json
+
+# TypeScript incremental cache
+*.tsbuildinfo
