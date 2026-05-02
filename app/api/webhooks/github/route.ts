@@ -10,18 +10,45 @@ const webhooks = new Webhooks({
 
 export async function POST(req: Request) {
   try {
+
+    console.log('[GitHub Webhook] Debug:', {
+      NODE_ENV: process.env.NODE_ENV,
+      secretSet: !!process.env.GITHUB_WEBHOOK_SECRET,
+    });
     const body = await req.text();
     const headerList = await headers();
     const signature = headerList.get("x-hub-signature-256");
     const event = headerList.get("x-github-event");
 
     if (!signature) {
-      return new Response("Missing signature", { status: 401 });
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[GitHub Webhook] Missing signature in development');
+        return new Response(JSON.stringify({
+          message: 'Missing signature (development bypass)',
+          debug: {
+            NODE_ENV: process.env.NODE_ENV,
+            secretSet: !!process.env.GITHUB_WEBHOOK_SECRET,
+            providedSignature: signature
+          }
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      return new Response('Missing signature', { status: 401 });
     }
 
     // Verify security signature
     if (!(await webhooks.verify(body, signature))) {
-      return new Response("Unauthorized", { status: 401 });
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[GitHub Webhook] Invalid signature in development');
+        return new Response(JSON.stringify({
+          message: 'Invalid signature (development bypass)',
+          debug: {
+            NODE_ENV: process.env.NODE_ENV,
+            secretSet: !!process.env.GITHUB_WEBHOOK_SECRET,
+            providedSignature: signature,
+          }
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      return new Response('Unauthorized', { status: 401 });
     }
 
     const payload = JSON.parse(body);

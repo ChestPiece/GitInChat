@@ -5,8 +5,9 @@ export const handlers: EventHandlerMap = {
   push: (payload: any) => {
     const pusherName = payload.pusher?.name || payload.sender?.login || 'unknown';
     const commitCount = payload.commits?.length || 0;
-    const refToken = payload.ref.split('/');
-    const branch = refToken[refToken.length - 1];
+    const ref = typeof payload.ref === 'string' ? payload.ref : 'refs/heads/unknown';
+    const refToken = ref.split('/');
+    const branch = refToken[refToken.length - 1] || 'unknown';
     const message = payload.head_commit?.message || (commitCount > 0 ? `Pushed ${commitCount} commits` : 'Update');
 
     return {
