@@ -45,19 +45,19 @@ export default function LoginPage() {
   }, { scope: rootRef })
 
   return (
-    <div ref={rootRef} className="relative min-h-screen bg-[var(--gh-canvas)] flex flex-col items-center justify-center p-4 overflow-hidden">
-      <div className="login-orb pointer-events-none absolute -top-32 -right-24 h-80 w-80 rounded-full bg-[rgba(35,134,54,0.22)] blur-[120px]" />
-      <div className="login-orb pointer-events-none absolute -bottom-32 -left-24 h-80 w-80 rounded-full bg-[rgba(31,111,235,0.2)] blur-[120px]" />
+    <div ref={rootRef} className="relative min-h-screen bg-[var(--pr-bg)] flex flex-col items-center justify-center p-4 overflow-hidden">
+      <div className="login-orb pointer-events-none absolute -top-32 -right-24 h-80 w-80 rounded-full bg-[rgba(16,185,129,0.22)] blur-[120px]" />
+      <div className="login-orb pointer-events-none absolute -bottom-32 -left-24 h-80 w-80 rounded-full bg-[rgba(99,102,241,0.2)] blur-[120px]" />
       <div className="login-orb pointer-events-none absolute top-1/2 left-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[rgba(139,92,246,0.14)] blur-[120px]" />
 
       <div className="mb-6 login-form-item">
-        <svg className="h-12 w-12 text-[var(--gh-text)]" viewBox="0 0 98 96" fill="none" aria-hidden="true">
+        <svg className="h-12 w-12 text-[var(--pr-text)]" viewBox="0 0 98 96" fill="none" aria-hidden="true">
           <path className="login-logo-path" d="M49 1C22 1 1 22 1 49c0 22 14 40 34 47 2 0 3-1 3-3v-9c-14 3-17-6-17-6-2-5-5-7-5-7-4-3 0-3 0-3 4 0 6 4 6 4 4 6 10 5 12 4 0-3 1-5 2-6-11-1-22-5-22-24 0-5 2-9 4-12 0-1-2-6 1-12 0 0 4-1 13 4 4-1 8-2 12-2 4 0 8 1 12 2 9-5 13-4 13-4 3 6 1 11 1 12 2 3 4 7 4 12 0 19-11 23-22 24 1 1 3 4 3 9v13c0 2 1 3 3 3 20-7 34-25 34-47C97 22 76 1 49 1Z" stroke="currentColor" strokeWidth="2" />
         </svg>
       </div>
 
       <div className="w-full max-w-[340px] relative z-10">
-        <h1 className="login-form-item text-2xl font-semibold text-[var(--gh-text)] text-center mb-4">
+        <h1 className="login-form-item text-2xl font-semibold text-[var(--pr-text)] text-center mb-4">
           Sign in to GitInChat
         </h1>
 
@@ -71,7 +71,7 @@ export default function LoginPage() {
           <Button
             onClick={handleGithubSignIn}
             disabled={isLoading}
-            className="login-form-item w-full bg-[var(--gh-green)] hover:bg-[var(--gh-green-hover)] text-white font-semibold h-9 border border-white/10 shadow-sm flex items-center gap-2 hover:shadow-[0_0_20px_var(--gh-green-glow)]"
+            className="login-form-item w-full bg-[var(--pr-accent)] hover:bg-[var(--pr-accent-hover)] text-white font-semibold h-9 border border-white/10 shadow-sm flex items-center gap-2 hover:shadow-[0_0_20px_var(--pr-accent-glow)]"
           >
             {isLoading ? (
               <>
@@ -96,8 +96,8 @@ export default function LoginPage() {
         </div>
 
         <div className="login-form-item mt-4 border border-white/10 bg-white/[0.02] backdrop-blur-xl rounded-xl p-4 text-center text-sm">
-          <span className="text-[var(--gh-text-muted)]">New to GitInChat? </span>
-          <Link href="/auth/signup" className="text-[var(--gh-blue)] hover:underline">
+          <span className="text-[var(--pr-text-muted)]">New to GitInChat? </span>
+          <Link href="/auth/signup" className="text-[#6366F1] hover:underline">
             Create an account
           </Link>
           .

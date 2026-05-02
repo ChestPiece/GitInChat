@@ -1,49 +1,46 @@
-# GitInChat — Project Guide for Claude
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## What This App Is
 
-GitInChat is an AI-powered GitHub management assistant. Users authenticate via GitHub OAuth and chat with an AI agent that can manage their repositories, issues, pull requests, branches, and more — all in natural language. It also supports real-time GitHub event streaming via webhooks and RAG-powered semantic code search.
+GitInChat is an AI-powered GitHub management assistant. Users authenticate via GitHub OAuth and chat with an AI agent that can manage repos, issues, PRs, and branches in natural language. Supports real-time GitHub event streaming via webhooks and RAG-powered semantic code search.
 
----
-
-## Tech Stack (ALWAYS follow these patterns)
+## Tech Stack
 
 ### Framework
-- **Next.js 15+ App Router** — use `app/` directory conventions, Server Components by default, Client Components only when needed (`"use client"`)
-- **TypeScript** — strict mode, always type props and return values
+- **Next.js 15+ App Router** — `app/` directory, Server Components by default, `"use client"` only when needed
+- **TypeScript** strict mode — always type props and return values
 - **React 19**
 
 ### Styling & UI
-- **Tailwind CSS** — utility-first, use `cn()` from `lib/utils` for conditional classes
-- **shadcn/ui** — ALL UI components come from `components/ui/`. Never install raw Radix UI primitives directly — use the shadcn wrappers. Add new components with `npx shadcn@latest add <component>`
-- **Lucide React** — for icons
-- **Framer Motion** — for animations
-- **Sonner** — for toasts (`toast.success`, `toast.error`)
+- **Tailwind CSS** — use `cn()` from `lib/utils` for conditional classes
+- **shadcn/ui** — ALL UI components from `components/ui/`. Never install raw Radix primitives. Add with `npx shadcn@latest add <component>`
+- **Lucide React** — icons
+- **GSAP** (`@gsap/react`) — primary animation lib; plugins registered in `lib/gsap.ts`. Framer Motion also present but prefer GSAP for complex animations.
+- **Sonner** — toasts (`toast.success`, `toast.error`)
 
 ### AI / LLM
-- **Vercel AI SDK** (`ai`, `@ai-sdk/react`, `@ai-sdk/openai`) — use `streamText`, `useChat`, `tool()` from this SDK. Do NOT use raw OpenAI/Anthropic SDK calls in chat routes
+- **Vercel AI SDK** (`ai`, `@ai-sdk/react`, `@ai-sdk/openai`) — use `streamText`, `useChat`, `tool()`. No raw OpenAI/Anthropic SDK calls in chat routes.
 - Models: OpenAI `gpt-4o-mini` (agent), embeddings via OpenAI
-- Tools are defined with `inputSchema: z.object({...})` (AI SDK v6 style — NOT `parameters`)
-- Agent loop lives in `lib/ai/agent.ts`, tools in `lib/ai/tools/`
+- Tools use `inputSchema: z.object({...})` (AI SDK v6 — NOT `parameters`)
+- Agent: `lib/ai/agent.ts` (`ToolLoopAgent`), tools: `lib/ai/tools/`
 
 ### Backend & Database
 - **Supabase** (Postgres + Auth + Realtime + pgvector)
-  - Server client: `lib/supabase/server.ts` (use in Server Components & API routes)
-  - Client: `lib/supabase/client.ts` (use in Client Components)
+  - Server client: `lib/supabase/server.ts` | Client: `lib/supabase/client.ts`
   - Auth: GitHub OAuth via Supabase Auth (`lib/auth.ts`)
-  - RLS is enabled — always write queries that respect row-level security
-  - Migrations go in `supabase/migrations/` as `.sql` files
+  - RLS enabled on all tables — always respect row-level security
+  - Migrations: `supabase/migrations/` as `.sql` files
 
 ### GitHub Integration
 - **Octokit** (`lib/github/client.ts`) — all GitHub API calls go through this
 - Webhooks verified via `@octokit/webhooks` in `app/api/webhooks/github/route.ts`
-- Real-time events broadcast over Supabase Realtime → `components/realtime-github-listener.tsx`
+- Real-time events → Supabase Realtime → `components/realtime-github-listener.tsx`
 
 ### RAG / Embeddings
-- pgvector (`vector(1536)`) for OpenAI embeddings stored in `documents` table; chunks are scoped per `user_id` (who ran indexing). `match_documents` RPC requires `filter_user_id`.
-- Indexing: `lib/rag/indexer.ts`, Search: `lib/rag/search.ts`, Embeddings: `lib/rag/embeddings.ts`
-
----
+- pgvector `vector(1536)` in `documents` table, scoped per `user_id`. `match_documents` RPC requires `filter_user_id`.
+- Indexing: `lib/rag/indexer.ts` | Search: `lib/rag/search.ts` | Embeddings: `lib/rag/embeddings.ts`
 
 ## Project Structure
 
@@ -53,35 +50,24 @@ app/
   api/webhooks/github/       # GitHub webhook receiver
   auth/                      # Login, signup, callback, error
   chat/                      # Chat list + [id] individual chat
-  profile/ settings/         # User pages
   actions/                   # Server Actions
-
 components/
-  ui/                        # shadcn components (DO NOT edit these directly)
+  ui/                        # shadcn components (DO NOT edit directly)
   chat-*.tsx                 # Chat UI components
-  layout/                    # Header, Sidebar, etc.
-
+  layout/                    # Header, Sidebar
 lib/
-  ai/
-    agent.ts                 # ToolLoopAgent (GPT-4o-mini, max 5 steps)
-    tools/                   # 25+ GitHub tools
-    prompts.ts               # System prompts
+  ai/agent.ts                # ToolLoopAgent (GPT-4o-mini, max 5 steps)
+  ai/tools/                  # 25+ GitHub tools, export via index.ts
+  ai/prompts.ts              # System prompts
   rag/                       # Embeddings, indexing, search
-  supabase/                  # DB client setup
   services/                  # chats.ts, messages.ts, events.ts
   github/                    # Octokit + webhook dispatcher
   safety/                    # Content moderation (SuperAgent)
   auth.ts                    # GitHub OAuth
-
 hooks/
   use-chat-controller.ts     # Main chat state
-  use-chats.ts
-  use-messages.ts
-
 supabase/migrations/         # SQL migrations (versioned)
 ```
-
----
 
 ## Database Schema
 
@@ -89,86 +75,69 @@ supabase/migrations/         # SQL migrations (versioned)
 |-------|---------|
 | `chats` | Chat sessions per user |
 | `messages` | Messages per chat (role: user/assistant) |
-| `documents` | RAG chunks with `embedding vector(1536)`, `user_id` (indexer owner) for tenant isolation |
+| `documents` | RAG chunks — `embedding vector(1536)`, `user_id` for tenant isolation |
 | `github_events` | Incoming GitHub webhook events |
-
-RLS is enabled on all tables. Users can only access their own data.
-
----
 
 ## Key Conventions
 
 ### API Routes
-- Chat route uses `createAgentUIStreamResponse` + `ToolLoopAgent` (30s `maxDuration`); assistant text is persisted once via stream `onFinish`, not per step
-- Always validate chat ownership and run safety check before processing
-- Fetch RAG context in parallel with other setup work; pass `session.user.id` into `searchSimilarDocuments`
-- **Local dev:** `POST /api/chat` allows unauthenticated requests only when `NODE_ENV === 'development'` for the session check, but a valid `provider_token` is still required — do not disable that in staging/production
+- Chat route: `createAgentUIStreamResponse` + `ToolLoopAgent` (30s `maxDuration`); assistant text persisted once via `onFinish`, not per step
+- Validate chat ownership + run safety check before processing
+- Fetch RAG context in parallel; pass `session.user.id` into `searchSimilarDocuments`
+- **Local dev:** `POST /api/chat` skips session check when `NODE_ENV === 'development'` but `provider_token` still required — never disable in staging/prod
 
 ### AI Tools
-- Defined using `tool()` from `ai` package
-- `inputSchema` must be a `z.object({})` (AI SDK v6 — not `parameters`)
-- Tools live in `lib/ai/tools/`, grouped by domain (repository/, rag/, etc.)
-- Export all tools from `lib/ai/tools/index.ts`
+- `tool()` from `ai` package; `inputSchema: z.object({})` (AI SDK v6)
+- Tools in `lib/ai/tools/`, grouped by domain; export all from `lib/ai/tools/index.ts`
 
 ### Components
-- Use shadcn components from `components/ui/`
-- Use `cn()` for merging Tailwind classes
-- Prefer Server Components; add `"use client"` only for interactivity/hooks
+- `cn()` for Tailwind class merging; prefer Server Components; `"use client"` only for hooks/interactivity
 
 ### Auth
-- Middleware (`middleware.ts`) protects all routes except `/`, `/auth/*`
-- GitHub OAuth token retrieved from Supabase session as `provider_token`
-
----
+- `middleware.ts` protects all routes except `/`, `/auth/*`
+- GitHub OAuth token from Supabase session as `provider_token`
 
 ## Environment Variables
 
 ```env
-# Public
 NEXT_PUBLIC_SITE_URL=
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
-
-# Private
 SUPABASE_SERVICE_ROLE_KEY=
 GITHUB_WEBHOOK_SECRET=
 SUPERAGENT_API_KEY=
+OPENAI_API_KEY=
 ```
-
-OpenAI key for AI SDK is set via standard `OPENAI_API_KEY`.
-
----
 
 ## Dev Commands
 
 ```bash
-npm run dev          # Next.js dev server + webhook proxy (concurrently)
+npm run dev          # Next.js + webhook proxy (concurrently)
 npm run build        # Production build
-npm run test         # Vitest
+npm run lint         # ESLint
+npm run test         # Vitest (all)
+npx vitest tests/chat-route.test.ts  # Single test file
 ```
-
----
 
 ## Deployment
 
-Hosted on **Vercel**. Environment variables set in Vercel dashboard. `next.config.mjs` includes security headers for CSP allowing Supabase + GitHub API origins.
+Vercel. Env vars in Vercel dashboard. `next.config.mjs` has CSP headers for Supabase + GitHub origins.
 
-## Skill routing
+## Skill Routing
 
-When the user's request matches an available skill, ALWAYS invoke it using the Skill
-tool as your FIRST action. Do NOT answer directly, do NOT use other tools first.
-The skill has specialized workflows that produce better results than ad-hoc answers.
+Invoke skills via the Skill tool BEFORE any other action when matched.
 
-Key routing rules:
-- Product ideas, "is this worth building", brainstorming → invoke office-hours
-- Bugs, errors, "why is this broken", 500 errors → invoke investigate
-- Ship, deploy, push, create PR → invoke ship
-- QA, test the site, find bugs → invoke qa
-- Code review, check my diff → invoke review
-- Update docs after shipping → invoke document-release
-- Weekly retro → invoke retro
-- Design system, brand → invoke design-consultation
-- Visual audit, design polish → invoke design-review
-- Architecture review → invoke plan-eng-review
-- Save progress, checkpoint, resume → invoke checkpoint
-- Code quality, health check → invoke health
+| Signal | Skill |
+|--------|-------|
+| Product ideas, brainstorming | `office-hours` |
+| Bugs, errors, 500s | `investigate` |
+| Ship, deploy, PR | `ship` |
+| QA, find bugs | `qa` |
+| Code review | `review` |
+| Update docs post-ship | `document-release` |
+| Weekly retro | `retro` |
+| Design system/brand | `design-consultation` |
+| Visual polish | `design-review` |
+| Architecture review | `plan-eng-review` |
+| Save/resume progress | `checkpoint` |
+| Code quality | `health` |

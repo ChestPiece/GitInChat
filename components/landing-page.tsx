@@ -86,7 +86,7 @@ export function LandingPage() {
       }
 
       gsap.fromTo(".logo-path", { drawSVG: "0% 0%" }, { drawSVG: "0% 100%", duration: 0.8, delay: 0.1 })
-      gsap.to(".cta-btn", { boxShadow: "0 0 34px var(--gh-green-glow)", duration: 1.8, repeat: -1, yoyo: true })
+      gsap.to(".cta-btn", { boxShadow: "0 0 34px var(--pr-accent-glow)", duration: 1.8, repeat: -1, yoyo: true })
 
       ScrollTrigger.batch(".reveal-card", {
         interval: 0.1,
@@ -186,10 +186,10 @@ export function LandingPage() {
   }, { scope: rootRef })
 
   return (
-    <div ref={rootRef} id="smooth-wrapper" className="min-h-screen bg-[var(--gh-canvas)] text-[var(--gh-text)] font-sans selection:bg-ring/30">
+    <div ref={rootRef} id="smooth-wrapper" className="min-h-screen bg-[var(--pr-bg)] text-[var(--pr-text)] font-sans selection:bg-ring/30">
       <div id="cursor-glow" />
       <div id="smooth-content">
-        <header className="fixed top-0 z-50 w-full border-b border-[var(--gh-border)]/80 bg-[var(--gh-canvas)]/75 backdrop-blur-xl">
+        <header className="fixed top-0 z-50 w-full border-b border-[var(--pr-border)]/80 bg-[var(--pr-bg)]/75 backdrop-blur-xl">
           <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
             <div className="flex items-center gap-2 text-[15px] font-semibold">
               <svg className="h-5 w-5" viewBox="0 0 98 96" fill="none" aria-hidden="true">
@@ -202,12 +202,12 @@ export function LandingPage() {
               </svg>
               <span>GitInChat</span>
             </div>
-            <nav className="hidden items-center gap-6 text-sm text-[var(--gh-text-muted)] md:flex">
-              <Link href="#features" className="transition-colors hover:text-[var(--gh-text)]">Features</Link>
-              <Link href="#how-it-works" className="transition-colors hover:text-[var(--gh-text)]">How it works</Link>
-              <Link href="/auth/login" className="font-medium text-[var(--gh-text)] transition-colors hover:text-white/80">Sign in</Link>
+            <nav className="hidden items-center gap-6 text-sm text-[var(--pr-text-muted)] md:flex">
+              <Link href="#features" className="transition-colors hover:text-[var(--pr-text)]">Features</Link>
+              <Link href="#how-it-works" className="transition-colors hover:text-[var(--pr-text)]">How it works</Link>
+              <Link href="/auth/login" className="font-medium text-[var(--pr-text)] transition-colors hover:text-white/80">Sign in</Link>
               <Link href="/auth/signup">
-                <Button size="sm" className="cta-btn h-8 border border-white/10 bg-[var(--gh-green)] px-4 font-semibold text-white hover:bg-[var(--gh-green-hover)]">
+                <Button size="sm" className="cta-btn h-8 border border-white/10 bg-[var(--pr-accent)] px-4 font-semibold text-white hover:bg-[var(--pr-accent-hover)]">
                   Sign up
                 </Button>
               </Link>
@@ -220,24 +220,24 @@ export function LandingPage() {
             <div className="hero-grid bg-dot-grid absolute inset-0 pointer-events-none rounded-3xl" data-speed="0.95" />
             <div className="relative grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-20">
               <div>
-                <div className="hero-badge mb-5 inline-flex items-center gap-2 rounded-full border border-[var(--gh-green)]/40 bg-[var(--gh-green)]/10 px-3 py-1" data-speed="1.1">
-                  <span className="h-2 w-2 animate-dot-pulse rounded-full bg-[var(--gh-green)]" />
-                  <span className="text-xs text-[var(--gh-text)]">Now in Beta</span>
+                <div className="hero-badge mb-5 inline-flex items-center gap-2 rounded-full border border-[var(--pr-accent)]/40 bg-[var(--pr-accent)]/10 px-3 py-1" data-speed="1.1">
+                  <span className="h-2 w-2 animate-dot-pulse rounded-full bg-[var(--pr-accent)]" />
+                  <span className="text-xs text-[var(--pr-text)]">Now in Beta</span>
                 </div>
                 <h1 ref={headlineRef} className="font-display text-[clamp(3rem,6vw,5rem)] font-extrabold leading-[1.03] tracking-tight">
-                  Ship GitHub work faster, <span className="text-[var(--gh-text-muted)]">without command overload.</span>
+                  Ship GitHub work faster, <span className="text-[var(--pr-text-muted)]">without command overload.</span>
                 </h1>
-                <p ref={subtitleRef} className="hero-subtitle mt-5 max-w-xl text-[17px] leading-relaxed text-[var(--gh-text-muted)]">
+                <p ref={subtitleRef} className="hero-subtitle mt-5 max-w-xl text-[17px] leading-relaxed text-[var(--pr-text-muted)]">
                   GitInChat turns plain-English prompts into safe repo operations, PR reviews, and code-aware answers with full context.
                 </p>
                 <div className="hero-cta mt-8 flex flex-col gap-3 sm:flex-row">
                   <Link href="/auth/signup">
-                    <Button className="cta-btn h-10 border border-white/10 bg-[var(--gh-green)] px-6 font-semibold text-white hover:bg-[var(--gh-green-hover)]">
+                    <Button className="cta-btn h-10 border border-white/10 bg-[var(--pr-accent)] px-6 font-semibold text-white hover:bg-[var(--pr-accent-hover)]">
                       Start free with GitHub
                     </Button>
                   </Link>
                   <Link href="#demo">
-                    <Button variant="outline" className="h-10 border-[var(--gh-border)] px-6 font-semibold text-[var(--gh-text)] hover:bg-[var(--gh-subtle)]">
+                    <Button variant="outline" className="h-10 border-[var(--pr-border)] px-6 font-semibold text-[var(--pr-text)] hover:bg-[var(--pr-surface)]">
                       Watch workflow
                     </Button>
                   </Link>
@@ -246,19 +246,19 @@ export function LandingPage() {
 
               <div className="hero-terminal hidden lg:block" data-speed="0.85">
                 <div className="glass-card rounded-2xl overflow-hidden shadow-[0_0_60px_rgba(35,134,54,0.08),inset_0_1px_0_rgba(255,255,255,0.05)]">
-                  <div className="hero-terminal-line flex items-center gap-2 border-b border-[var(--gh-border)] bg-[var(--gh-overlay)] px-4 py-2.5">
+                  <div className="hero-terminal-line flex items-center gap-2 border-b border-[var(--pr-border)] bg-[var(--pr-surface-elevated)] px-4 py-2.5">
                     <div className="flex gap-1.5">
                       <div className="h-3 w-3 rounded-full border border-red-500/50 bg-red-500/30" />
                       <div className="h-3 w-3 rounded-full border border-yellow-500/50 bg-yellow-500/30" />
                       <div className="h-3 w-3 rounded-full border border-green-500/50 bg-green-500/30" />
                     </div>
-                    <span className="ml-2 font-mono text-xs text-[var(--gh-text-muted)]">gitinchat</span>
+                    <span className="ml-2 font-mono text-xs text-[var(--pr-text-muted)]">gitinchat</span>
                   </div>
                   <div className="hero-terminal-line min-h-[230px] space-y-2 p-5 font-mono text-sm">
-                    <div><span className="text-[var(--gh-blue)]">➜</span> <span className="text-[var(--gh-text-muted)]">~</span> gitinchat</div>
-                    <div className="text-xs text-[var(--gh-text-muted)]">Agent online. Describe outcome and I will pick tools.</div>
+                    <div><span className="text-[#6366F1]">➜</span> <span className="text-[var(--pr-text-muted)]">~</span> gitinchat</div>
+                    <div className="text-xs text-[var(--pr-text-muted)]">Agent online. Describe outcome and I will pick tools.</div>
                     <div className="mt-3 flex items-start gap-2">
-                      <span className="shrink-0 text-[var(--gh-green)]">$</span>
+                      <span className="shrink-0 text-[var(--pr-accent)]">$</span>
                       <span className="break-all">
                         <span ref={terminalLineRef} />
                         <span className="ml-0.5 animate-pulse">▌</span>
@@ -274,7 +274,7 @@ export function LandingPage() {
             <div className="section-divider mb-8" />
             <div className="grid gap-3 md:grid-cols-4">
               {TRUST_ITEMS.map((item) => (
-                <div key={item} className="trust-chip reveal-card rounded-xl border border-[var(--gh-border)] bg-[var(--gh-overlay)]/55 px-4 py-3 text-xs text-[var(--gh-text-muted)]">
+                <div key={item} className="trust-chip reveal-card rounded-xl border border-[var(--pr-border)] bg-[var(--pr-surface-elevated)]/55 px-4 py-3 text-xs text-[var(--pr-text-muted)]">
                   {item}
                 </div>
               ))}
@@ -285,20 +285,20 @@ export function LandingPage() {
             <div className="reveal-card glass-card rounded-2xl p-6 md:p-8">
               <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                 <div className="max-w-xl">
-                  <p className="mb-2 text-xs uppercase tracking-[0.18em] text-[var(--gh-text-muted)]">Interactive workflow preview</p>
+                  <p className="mb-2 text-xs uppercase tracking-[0.18em] text-[var(--pr-text-muted)]">Interactive workflow preview</p>
                   <h2 className="text-2xl font-semibold md:text-3xl">From request to PR in one guided loop.</h2>
-                  <p className="mt-3 text-sm leading-relaxed text-[var(--gh-text-muted)]">
+                  <p className="mt-3 text-sm leading-relaxed text-[var(--pr-text-muted)]">
                     Ask, inspect changes, run checks, and open a PR without context switching between 6 tools.
                   </p>
                 </div>
                 <div ref={commandBurstRef} className="relative">
-                  <Button ref={commandButtonRef} className="cta-btn border border-[var(--gh-border)] bg-[var(--gh-subtle)] text-[var(--gh-text)] hover:bg-[var(--gh-overlay)]">
+                  <Button ref={commandButtonRef} className="cta-btn border border-[var(--pr-border)] bg-[var(--pr-surface)] text-[var(--pr-text)] hover:bg-[var(--pr-surface-elevated)]">
                     Trigger workflow simulation
                   </Button>
                   {Array.from({ length: 10 }).map((_, index) => (
                     <span
                       key={index}
-                      className="burst-particle pointer-events-none absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--gh-green)] opacity-0"
+                      className="burst-particle pointer-events-none absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--pr-accent)] opacity-0"
                     />
                   ))}
                 </div>
@@ -309,16 +309,16 @@ export function LandingPage() {
           <section id="features" className="mx-auto max-w-7xl px-6 pb-16">
             <div className="mb-8">
               <h2 className="text-2xl font-semibold md:text-3xl">Built for repo velocity, not dashboard clutter.</h2>
-              <p className="mt-2 max-w-2xl text-sm text-[var(--gh-text-muted)]">Bento layout highlights what matters most when shipping code with an AI copilot.</p>
+              <p className="mt-2 max-w-2xl text-sm text-[var(--pr-text-muted)]">Bento layout highlights what matters most when shipping code with an AI copilot.</p>
             </div>
             <div className="grid gap-4 md:grid-cols-3">
               {FEATURE_TILES.map(({ title, body, icon: Icon, className }) => (
                 <article key={title} className={`reveal-card glass-card rounded-2xl p-5 ${className}`}>
-                  <div className="mb-4 inline-flex rounded-md bg-white/[0.02] p-2 text-[var(--gh-text-muted)]">
+                  <div className="mb-4 inline-flex rounded-md bg-white/[0.02] p-2 text-[var(--pr-text-muted)]">
                     <Icon className="h-4 w-4" />
                   </div>
                   <h3 className="text-base font-semibold">{title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-[var(--gh-text-muted)]">{body}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--pr-text-muted)]">{body}</p>
                 </article>
               ))}
             </div>
@@ -328,23 +328,23 @@ export function LandingPage() {
             <div className="workflow-grid grid gap-4 md:grid-cols-3">
               {HOW_IT_WORKS.map(({ title, body, icon: Icon }) => (
                 <article key={title} className="workflow-step glass-card rounded-2xl p-5">
-                  <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--gh-border)] bg-[var(--gh-overlay)] text-[var(--gh-green)]">
+                  <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--pr-border)] bg-[var(--pr-surface-elevated)] text-[var(--pr-accent)]">
                     <Icon className="h-4 w-4" />
                   </div>
                   <h3 className="font-semibold">{title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-[var(--gh-text-muted)]">{body}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--pr-text-muted)]">{body}</p>
                 </article>
               ))}
             </div>
           </section>
 
           <section className="mx-auto max-w-7xl px-6 pb-16">
-            <article className="reveal-card rounded-2xl border border-[var(--gh-border)] bg-[var(--gh-overlay)]/65 p-6 md:p-8">
-              <p className="text-xs uppercase tracking-[0.2em] text-[var(--gh-text-muted)]">Social proof</p>
+            <article className="reveal-card rounded-2xl border border-[var(--pr-border)] bg-[var(--pr-surface-elevated)]/65 p-6 md:p-8">
+              <p className="text-xs uppercase tracking-[0.2em] text-[var(--pr-text-muted)]">Social proof</p>
               <blockquote className="mt-3 text-lg font-medium leading-relaxed md:text-xl">
                 “GitInChat cut our release prep by 42%. We stopped context-switching between GitHub tabs and terminal scripts.”
               </blockquote>
-              <p className="mt-4 text-sm text-[var(--gh-text-muted)]">Engineering Lead, SaaS infra team</p>
+              <p className="mt-4 text-sm text-[var(--pr-text-muted)]">Engineering Lead, SaaS infra team</p>
             </article>
           </section>
 
@@ -352,9 +352,9 @@ export function LandingPage() {
             <div className="section-divider mb-10" />
             <div className="text-center">
               <h2 className="final-cta-title text-3xl font-semibold md:text-4xl">Ready to run GitHub in plain English?</h2>
-              <p className="mt-3 text-sm text-[var(--gh-text-muted)]">Free during beta. Connect account, run first workflow in minutes.</p>
+              <p className="mt-3 text-sm text-[var(--pr-text-muted)]">Free during beta. Connect account, run first workflow in minutes.</p>
               <Link href="/auth/signup">
-                <Button className="cta-btn mt-8 h-11 border border-white/10 bg-[var(--gh-green)] px-10 font-semibold text-white hover:bg-[var(--gh-green-hover)]">
+                <Button className="cta-btn mt-8 h-11 border border-white/10 bg-[var(--pr-accent)] px-10 font-semibold text-white hover:bg-[var(--pr-accent-hover)]">
                   Get started for free
                 </Button>
               </Link>
@@ -362,8 +362,8 @@ export function LandingPage() {
           </section>
         </main>
 
-        <footer className="relative border-t border-[var(--gh-border)] px-6 py-8 text-center text-xs text-[var(--gh-text-muted)]">
-          <div className="absolute left-0 top-0 h-px w-full bg-gradient-to-r from-transparent via-[var(--gh-green)] to-[var(--gh-blue)]" />
+        <footer className="relative border-t border-[var(--pr-border)] px-6 py-8 text-center text-xs text-[var(--pr-text-muted)]">
+          <div className="absolute left-0 top-0 h-px w-full bg-gradient-to-r from-transparent via-[var(--pr-accent)] to-[#6366F1]" />
           <p>© 2026 GitInChat. All rights reserved.</p>
         </footer>
       </div>

@@ -54,14 +54,14 @@ export function ChatMessage({
   const textContent = textFromParts || content || '';
 
   // Extract tool parts from parts array
-  const toolParts = parts?.filter(part => 
-    part.type === 'tool-invocation' || 
+  const toolParts = parts?.filter(part =>
+    part.type === 'tool-invocation' ||
     part.type.startsWith('tool-')
   ) || [];
 
   return (
     <div className={cn('flex gap-3 mb-4 relative group items-start', isUser && 'flex-row-reverse', isNew && 'message-new')}>
-      <Avatar className={cn("w-9 h-9 flex-shrink-0 border", isUser ? "border-[rgba(31,111,235,0.25)]" : "border-[var(--gh-border)]")}>
+      <Avatar className={cn("w-9 h-9 flex-shrink-0 border", isUser ? "border-[rgba(99,102,241,0.25)]" : "border-[var(--pr-border)]")}>
         <AvatarFallback
           className={cn(
             'flex items-center justify-center bg-background text-foreground',
@@ -72,7 +72,7 @@ export function ChatMessage({
       </Avatar>
 
       <div className={cn('flex-1 max-w-3xl min-w-0', isUser && 'flex flex-col items-end')}>
-        <div className={cn('w-full rounded-xl border px-4 py-3 text-sm overflow-x-auto', isUser ? 'bg-[var(--gh-blue)]/10 border-[rgba(31,111,235,0.2)] text-[var(--gh-text)]' : 'bg-white/[0.02] border-[var(--gh-border)] border-l-[3px] border-l-[var(--gh-green)] text-[var(--gh-text)]')}>
+        <div className={cn('w-full rounded-xl border px-4 py-3 text-sm overflow-x-auto', isUser ? 'bg-[#6366F1]/10 border-[rgba(99,102,241,0.2)] text-[var(--pr-text)]' : 'bg-white/[0.02] border-[var(--pr-border)] border-l-[3px] border-l-[var(--pr-accent)] text-[var(--pr-text)]')}>
           <MessageContent content={textContent} />
           <MessageToolList toolParts={toolParts} toolInvocations={toolInvocations} />
           {!isUser && (
@@ -85,4 +85,3 @@ export function ChatMessage({
     </div>
   )
 }
-

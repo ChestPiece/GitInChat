@@ -77,12 +77,13 @@ export function ChatLayoutShell({ children, user }: ChatLayoutShellProps) {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-[#0d1117] overflow-hidden">
+    <div className="flex flex-col h-screen bg-[var(--pr-bg)] overflow-hidden">
       <Header user={headerUser} onMenuClick={() => setIsMobileMenuOpen(true)} />
       
       <div className="flex flex-1 overflow-hidden relative">
-        <Sidebar 
-          chats={formattedChats} 
+        <Sidebar
+          user={headerUser}
+          chats={formattedChats}
           onNewChat={handleNewChat}
           onDeleteChat={handleDeleteChat}
           onRenameChat={handleRenameChat}

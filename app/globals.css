@@ -23,7 +23,7 @@ body {
   }
 
   .bg-dot-grid {
-    background-color: var(--gh-canvas);
+    background-color: var(--pr-bg);
     background-image: radial-gradient(circle at 1px 1px, rgba(230, 237, 243, 0.12) 1px, transparent 0);
     background-size: 24px 24px;
     mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent);
@@ -48,7 +48,7 @@ body {
   .section-divider {
     height: 1px;
     width: 100%;
-    background: linear-gradient(90deg, transparent 0%, rgba(48, 54, 61, 0.95) 22%, rgba(35, 134, 54, 0.5) 50%, rgba(31, 111, 235, 0.45) 78%, transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, rgba(48, 54, 61, 0.95) 22%, rgba(16, 185, 129, 0.4) 50%, rgba(99, 102, 241, 0.3) 78%, transparent 100%);
   }
 
   .noise-overlay {
@@ -67,6 +67,10 @@ body {
 }
 
 @layer base {
+  * {
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
   :root {
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
@@ -101,78 +105,64 @@ body {
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
-    --gh-canvas: #0d1117;
-    --gh-subtle: #161b22;
-    --gh-overlay: #1c2128;
-    --gh-border: #30363d;
-    --gh-border-muted: #21262d;
-    --gh-green: #238636;
-    --gh-green-hover: #2ea043;
-    --gh-green-glow: rgba(35, 134, 54, 0.25);
-    --gh-blue: #1f6feb;
-    --gh-blue-glow: rgba(31, 111, 235, 0.15);
-    --gh-text: #e6edf3;
-    --gh-text-muted: #8b949e;
-    --gh-text-subtle: #484f58;
+    /* Premium SaaS tokens — replace all --gh-* vars */
+    --pr-bg: #09090B;
+    --pr-surface: #18181B;
+    --pr-surface-elevated: #27272A;
+    --pr-border: rgba(255, 255, 255, 0.07);
+    --pr-border-strong: rgba(255, 255, 255, 0.12);
+    --pr-accent: #10B981;
+    --pr-accent-hover: #059669;
+    --pr-accent-glow: rgba(16, 185, 129, 0.2);
+    --pr-text: #FAFAFA;
+    --pr-text-muted: #71717A;
+    --pr-text-subtle: #52525B;
   }
   .dark {
-    /* GitHub Dark Dimmed Palette */
-    --background: 216 28% 7%; /* #0d1117 Main Canvas */
-    --foreground: 210 12% 93%; /* #e6edf3 Main Text */
-
-    --card: 215 21% 11%; /* #161b22 Canvas Subtler */
-    --card-foreground: 210 12% 93%;
-
-    --popover: 215 21% 11%;
-    --popover-foreground: 210 12% 93%;
-
-    --primary: 137 57% 33%; /* #238636 Success Button */
+    --background: 240 10% 4%;        /* #09090B zinc-950 */
+    --foreground: 0 0% 98%;          /* #FAFAFA */
+    --card: 240 6% 10%;              /* #18181B zinc-900 */
+    --card-foreground: 0 0% 98%;
+    --popover: 240 6% 10%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 160 84% 39%;          /* #10B981 emerald-500 */
     --primary-foreground: 0 0% 100%;
-
-    --secondary: 215 28% 17%; /* #21262d Button Default */
-    --secondary-foreground: 210 12% 93%;
-
-    --muted: 215 21% 11%; /* #161b22 */
-    --muted-foreground: 212 10% 57%; /* #8b949e Muted Text */
-
-    --accent: 213 12% 21%; /* #30363d Input Border / Hover */
-    --accent-foreground: 210 12% 93%;
-
-    --destructive: 346 84% 61%;
+    --secondary: 240 4% 16%;         /* #27272A zinc-800 */
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 4% 46%;  /* #71717A zinc-500 */
+    --accent: 240 4% 16%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 72% 51%;        /* #DC2626 */
     --destructive-foreground: 0 0% 100%;
-
-    --border: 213 12% 21%; /* #30363d */
-    --input: 213 12% 21%;
-    --ring: 212 92% 43%; /* #1f6feb Focus Ring */
-
-    --chart-1: 137 57% 33%; /* Green */
-    --chart-2: 212 92% 45%; /* Blue */
-    --chart-3: 262 52% 47%; /* Purple */
-    --chart-4: 39 100% 57%; /* Yellow */
-    --chart-5: 14 62% 48%; /* Orange */
-
-    /* Sidebar - Matching Main Canvas but using utility classes for differentiation if needed */
-    --sidebar-background: 216 28% 7%; /* #0d1117 */
-    --sidebar-foreground: 210 12% 93%;
-    --sidebar-primary: 210 12% 93%;
-    --sidebar-primary-foreground: 216 28% 7%;
-    --sidebar-accent: 215 21% 11%; /* #161b22 */
-    --sidebar-accent-foreground: 210 12% 93%;
-    --sidebar-border: 213 12% 21%;
-    --sidebar-ring: 212 92% 43%;
-    --gh-canvas: #0d1117;
-    --gh-subtle: #161b22;
-    --gh-overlay: #1c2128;
-    --gh-border: #30363d;
-    --gh-border-muted: #21262d;
-    --gh-green: #238636;
-    --gh-green-hover: #2ea043;
-    --gh-green-glow: rgba(35, 134, 54, 0.25);
-    --gh-blue: #1f6feb;
-    --gh-blue-glow: rgba(31, 111, 235, 0.15);
-    --gh-text: #e6edf3;
-    --gh-text-muted: #8b949e;
-    --gh-text-subtle: #484f58;
+    --border: 240 6% 10%;            /* subtle — use rgba override below */
+    --input: 240 4% 16%;
+    --ring: 160 84% 39%;             /* emerald focus ring */
+    --chart-1: 160 84% 39%;
+    --chart-2: 217 91% 60%;
+    --chart-3: 262 52% 47%;
+    --chart-4: 39 100% 57%;
+    --chart-5: 14 62% 48%;
+    --sidebar-background: 240 10% 4%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 160 84% 39%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 4% 16%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 240 6% 10%;
+    --sidebar-ring: 160 84% 39%;
+    /* Premium SaaS tokens — replace all --gh-* vars */
+    --pr-bg: #09090B;
+    --pr-surface: #18181B;
+    --pr-surface-elevated: #27272A;
+    --pr-border: rgba(255, 255, 255, 0.07);
+    --pr-border-strong: rgba(255, 255, 255, 0.12);
+    --pr-accent: #10B981;
+    --pr-accent-hover: #059669;
+    --pr-accent-glow: rgba(16, 185, 129, 0.2);
+    --pr-text: #FAFAFA;
+    --pr-text-muted: #71717A;
+    --pr-text-subtle: #52525B;
   }
 }
 
@@ -185,7 +175,7 @@ body {
   pointer-events: none;
   border-radius: 9999px;
   z-index: 9999;
-  background: radial-gradient(circle, rgba(35, 134, 54, 0.08) 0%, rgba(35, 134, 54, 0) 70%);
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0) 70%);
   transform: translate(-50%, -50%);
   will-change: transform;
 }

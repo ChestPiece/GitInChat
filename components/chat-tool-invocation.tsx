@@ -53,10 +53,10 @@ export function ChatToolInvocation({ toolInvocation }: ChatToolInvocationProps) 
       return (
         <div className="space-y-2">
           <div className="text-sm font-medium text-gray-400">Found {repos.length} repositories</div>
-          <ScrollArea className="h-[300px] w-full rounded-md border border-[#30363d] p-2 bg-[#0d1117]">
+          <ScrollArea className="h-[300px] w-full rounded-md border border-[rgba(255,255,255,0.07)] p-2 bg-[#09090B]">
             <div className="space-y-2">
               {repos.map((repo: any, i: number) => (
-                <div key={i} className="p-3 bg-[#161b22] border border-[#30363d] rounded-md hover:border-blue-500 transition-colors">
+                <div key={i} className="p-3 bg-[#18181B] border border-[rgba(255,255,255,0.07)] rounded-md hover:border-blue-500 transition-colors">
                   <div className="flex justify-between items-start">
                     <a href={repo.html_url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline font-medium">
                       {repo.full_name}
@@ -81,9 +81,9 @@ export function ChatToolInvocation({ toolInvocation }: ChatToolInvocationProps) 
     if (toolName === 'getRepositoryDetails') {
        const repo = result;
        if (!repo) return <div className="text-gray-500">No repository details</div>;
-       
+
        return (
-        <div className="p-4 bg-[#161b22] border border-[#30363d] rounded-md">
+        <div className="p-4 bg-[#18181B] border border-[rgba(255,255,255,0.07)] rounded-md">
             <div className="flex justify-between items-start">
                 <a href={repo.html_url} target="_blank" rel="noopener noreferrer" className="text-xl text-blue-400 hover:underline font-bold">
                     {repo.full_name}
@@ -116,7 +116,7 @@ export function ChatToolInvocation({ toolInvocation }: ChatToolInvocationProps) 
                    <div className="flex items-center gap-1"><FileCode className="w-4 h-4"/> File Content</div>
                    {safeResult.truncated && <span className="text-yellow-500">(Truncated)</span>}
                 </div>
-                <div className="bg-[#0d1117] border border-[#30363d] rounded-md p-3 overflow-x-auto">
+                <div className="bg-[#09090B] border border-[rgba(255,255,255,0.07)] rounded-md p-3 overflow-x-auto">
                     <pre className="text-xs font-mono text-gray-300">
                         {String(safeResult.content ?? '')}
                     </pre>
@@ -130,7 +130,7 @@ export function ChatToolInvocation({ toolInvocation }: ChatToolInvocationProps) 
     if (toolName === 'searchCodebase') {
       const isString = typeof result === 'string';
       const content = isString ? result : JSON.stringify(result, null, 2);
-      
+
       // If result is the "No results" message
       if (content.includes("No relevant code found")) {
          return (
@@ -142,11 +142,11 @@ export function ChatToolInvocation({ toolInvocation }: ChatToolInvocationProps) 
 
       return (
         <div className="space-y-2">
-           <div className="flex items-center gap-2 text-sm text-gray-400 px-2 pb-1 border-b border-[#30363d]">
+           <div className="flex items-center gap-2 text-sm text-gray-400 px-2 pb-1 border-b border-[rgba(255,255,255,0.07)]">
                <FileCode className="w-4 h-4" />
                <span>Codebase Search Results</span>
            </div>
-           <div className="bg-[#0d1117] border border-[#30363d] rounded-md p-3 overflow-x-auto text-xs font-mono text-gray-300 whitespace-pre-wrap max-h-[400px] overflow-y-auto custom-scrollbar">
+           <div className="bg-[#09090B] border border-[rgba(255,255,255,0.07)] rounded-md p-3 overflow-x-auto text-xs font-mono text-gray-300 whitespace-pre-wrap max-h-[400px] overflow-y-auto custom-scrollbar">
               {content}
            </div>
         </div>
@@ -164,7 +164,7 @@ export function ChatToolInvocation({ toolInvocation }: ChatToolInvocationProps) 
                   <div className="flex items-center gap-1"><FileCode className="w-4 h-4"/> File Content: {toolInvocation.args.filePath}</div>
                   {safeResult.truncated && <span className="text-yellow-500">(Truncated)</span>}
                </div>
-               <div className="bg-[#0d1117] border border-[#30363d] rounded-md p-3 overflow-x-auto max-h-[500px] overflow-y-auto custom-scrollbar">
+               <div className="bg-[#09090B] border border-[rgba(255,255,255,0.07)] rounded-md p-3 overflow-x-auto max-h-[500px] overflow-y-auto custom-scrollbar">
                    <pre className="text-xs font-mono text-gray-300">
                        {String(safeResult.content ?? '')}
                    </pre>
@@ -183,7 +183,7 @@ export function ChatToolInvocation({ toolInvocation }: ChatToolInvocationProps) 
     }
 
     return (
-      <div className="bg-[#0d1117] p-2 rounded-md border border-[#30363d] text-xs font-mono text-gray-400 overflow-x-auto">
+      <div className="bg-[#09090B] p-2 rounded-md border border-[rgba(255,255,255,0.07)] text-xs font-mono text-gray-400 overflow-x-auto">
         {JSON.stringify(result, null, 2)}
       </div>
     );
@@ -197,21 +197,21 @@ export function ChatToolInvocation({ toolInvocation }: ChatToolInvocationProps) 
   return (
     <div className="my-2">
       <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full">
-        <div className="flex items-center justify-between bg-white/[0.02] p-2 rounded-t-md border border-[var(--gh-border)] border-l-[3px] border-l-[var(--gh-green)]">
+        <div className="flex items-center justify-between bg-white/[0.02] p-2 rounded-t-md border border-[var(--pr-border)] border-l-[3px] border-l-[var(--pr-accent)]">
              <div className="flex items-center gap-2">
-                 <Badge variant="outline" className="text-xs border-[rgba(35,134,54,0.35)] text-[var(--gh-green)] bg-[rgba(35,134,54,0.12)]">
+                 <Badge variant="outline" className="text-xs border-[rgba(35,134,54,0.35)] text-[var(--pr-accent)] bg-[rgba(35,134,54,0.12)]">
                      Tool: {toolName}
                  </Badge>
              </div>
              <CollapsibleTrigger asChild>
-                 <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-[var(--gh-subtle)]/70">
+                 <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-[var(--pr-surface)]/70">
                      {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                      <span className="sr-only">Toggle</span>
                  </Button>
              </CollapsibleTrigger>
         </div>
         <CollapsibleContent>
-             <div className="p-2 border-x border-b border-[var(--gh-border)] rounded-b-md bg-[var(--gh-canvas)]/50 text-sm break-all space-y-2">
+             <div className="p-2 border-x border-b border-[var(--pr-border)] rounded-b-md bg-[var(--pr-bg)]/50 text-sm break-all space-y-2">
                 <div className="mb-2 text-xs text-gray-500 font-mono">
                     Arguments: {JSON.stringify(toolInvocation.args)}
                 </div>

@@ -38,7 +38,7 @@ export function ChatInput({
     }
   }
 
-  /* 
+  /*
     Global keydown listener to focus input on typing.
     This mimics GitHub's ability to just start typing to comment.
   */
@@ -77,19 +77,19 @@ export function ChatInput({
 
   return (
     <div className="w-full">
-      <div className="border rounded-md overflow-hidden relative backdrop-blur bg-[var(--gh-subtle)]/60 border-[var(--gh-border)] focus-within:border-[var(--gh-blue)] focus-within:shadow-[0_0_0_3px_var(--gh-blue-glow)] transition-shadow">
+      <div className="border rounded-md overflow-hidden relative backdrop-blur bg-[var(--pr-surface)]/60 border-[var(--pr-border)] focus-within:border-[#6366F1] focus-within:shadow-[0_0_0_3px_rgba(99,102,241,0.15)] transition-shadow">
         {/* Header Tabs */}
         <Tabs defaultValue="write" className="w-full">
           <div className="bg-muted/40 border-b border-border px-2 pt-2">
             <TabsList className="bg-transparent h-auto p-0 gap-1">
-              <TabsTrigger 
-                value="write" 
+              <TabsTrigger
+                value="write"
                 className="data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:border-border data-[state=active]:border-b-transparent border border-transparent rounded-t-md px-3 py-2 text-xs font-medium text-foreground hover:text-foreground/80 relative top-[1px]"
               >
                 Write
               </TabsTrigger>
-              <TabsTrigger 
-                value="preview" 
+              <TabsTrigger
+                value="preview"
                 className="data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:border-border data-[state=active]:border-b-transparent border border-transparent rounded-t-md px-3 py-2 text-xs font-medium text-foreground hover:text-foreground/80 relative top-[1px]"
               >
                 Preview
@@ -135,7 +135,7 @@ export function ChatInput({
            <Button
              onClick={handleSend}
              disabled={disabled || !message.trim()}
-             className="group bg-[var(--gh-green)] hover:bg-[var(--gh-green-hover)] text-white font-semibold px-4 py-1.5 h-auto text-sm gap-1.5 hover:shadow-[0_0_16px_var(--gh-green-glow)]"
+             className="group bg-[var(--pr-accent)] hover:bg-[var(--pr-accent-hover)] text-white font-semibold px-4 py-1.5 h-auto text-sm gap-1.5 hover:shadow-[0_0_16px_var(--pr-accent-glow)]"
            >
              <Send className="w-3.5 h-3.5 transition-transform duration-200 group-hover:rotate-[15deg]" />
              Send

@@ -68,15 +68,15 @@ export default function ChatPage() {
         )}
         {isLoading && (
              <div className="flex gap-3 mb-6 items-center">
-               <div className="w-10 h-10 flex-shrink-0 border border-[var(--gh-border)] rounded-full bg-[var(--gh-canvas)] flex items-center justify-center">
+               <div className="w-10 h-10 flex-shrink-0 border border-[var(--pr-border)] rounded-full bg-[var(--pr-bg)] flex items-center justify-center">
                  <div className="flex gap-1">
-                   <span className="w-1.5 h-1.5 rounded-full bg-[var(--gh-green)] animate-dot-pulse" />
-                   <span className="w-1.5 h-1.5 rounded-full bg-[var(--gh-green)] animate-dot-pulse [animation-delay:120ms]" />
-                   <span className="w-1.5 h-1.5 rounded-full bg-[var(--gh-green)] animate-dot-pulse [animation-delay:240ms]" />
+                   <span className="w-1.5 h-1.5 rounded-full bg-[var(--pr-accent)] animate-dot-pulse" />
+                   <span className="w-1.5 h-1.5 rounded-full bg-[var(--pr-accent)] animate-dot-pulse [animation-delay:120ms]" />
+                   <span className="w-1.5 h-1.5 rounded-full bg-[var(--pr-accent)] animate-dot-pulse [animation-delay:240ms]" />
                  </div>
                </div>
-               <div className="h-1 w-40 bg-[var(--gh-subtle)] overflow-hidden rounded">
-                 <div className="scan-bar h-full bg-[var(--gh-green)] origin-left animate-scan-x" />
+               <div className="h-1 w-40 bg-[var(--pr-surface)] overflow-hidden rounded">
+                 <div className="scan-bar h-full bg-[var(--pr-accent)] origin-left animate-scan-x" />
                </div>
              </div>
         )}
