@@ -16,8 +16,8 @@ export async function createMessage(
   // 🛡️ Redact PII before storage
   let safeContent = content;
   try {
-    // Only redact user messages (assistants are trusted/already safe)
-    if (role === 'user' && content) {
+    // Redact PII from both user and assistant messages before storage
+    if (content) {
        const { safetyClient } = await import('@/lib/safety'); 
        // Uses SuperAgent 'redact' method which requires an LLM provider key
        // We use a lightweight model for speed/cost.

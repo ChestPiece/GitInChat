@@ -2,6 +2,17 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { generateEmbedding, chunkText } from './embeddings';
 import type { Octokit } from 'octokit';
 
+const SECRET_PATH_PATTERNS = [
+  /\.env(\.|$)/i,
+  /secrets?\./i,
+  /credentials?\./i,
+  /private[_-]?key/i,
+  /\.pem$/i,
+  /id_rsa/i,
+  /\.p12$/i,
+  /\.pfx$/i,
+];
+
 interface IndexResult {
   totalFiles: number;
   indexedFiles: number;
@@ -53,6 +64,7 @@ export async function indexRepository(
 
     const codeFiles = tree.tree.filter((item) => {
       if (item.type !== 'blob' || !item.path) return false;
+      if (SECRET_PATH_PATTERNS.some((p) => p.test(item.path!))) return false;
       return filePatterns.some((pattern) => pattern.test(item.path!));
     });
 
