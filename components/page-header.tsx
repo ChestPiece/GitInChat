@@ -18,8 +18,8 @@ export function PageHeader({ title, description, children }: PageHeaderProps) {
   return (
     <div className="flex flex-col space-y-4 mb-8">
       {/* Breadcrumbs / Back Navigation */}
-      <div className="flex items-center text-sm text-[#8b949e]">
-        <Link href="/" className="hover:text-[#58a6ff] transition-colors">
+      <div className="flex items-center text-sm text-[var(--pr-text-muted)]">
+        <Link href="/" className="hover:text-[var(--pr-secondary)] transition-colors">
           Home
         </Link>
         {paths.map((path, index) => (
@@ -34,7 +34,7 @@ export function PageHeader({ title, description, children }: PageHeaderProps) {
 
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild className="shrink-0 text-[#8b949e] hover:text-white hover:bg-[#30363d]/50 -ml-2">
+            <Button variant="ghost" size="icon" asChild className="shrink-0 text-[var(--pr-text-muted)] hover:text-white hover:bg-[var(--pr-surface-elevated)]/50 -ml-2">
                 <Link href="/">
                     <ChevronLeft className="h-5 w-5" />
                     <span className="sr-only">Back</span>
@@ -43,7 +43,7 @@ export function PageHeader({ title, description, children }: PageHeaderProps) {
             <div>
             <h1 className="text-3xl font-bold tracking-tight text-white">{title}</h1>
             {description && (
-                <p className="text-[#8b949e] mt-1">{description}</p>
+                <p className="text-[var(--pr-text-muted)] mt-1">{description}</p>
             )}
             </div>
         </div>

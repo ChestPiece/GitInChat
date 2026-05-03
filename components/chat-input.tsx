@@ -77,7 +77,7 @@ export function ChatInput({
 
   return (
     <div className="w-full">
-      <div className="border rounded-md overflow-hidden relative backdrop-blur bg-[var(--pr-surface)]/60 border-[var(--pr-border)] focus-within:border-[#6366F1] focus-within:shadow-[0_0_0_3px_rgba(99,102,241,0.15)] transition-shadow">
+      <div className="border rounded-md overflow-hidden relative backdrop-blur bg-[var(--pr-surface)]/60 border-[var(--pr-border)] focus-within:border-[var(--pr-secondary)] focus-within:shadow-[0_0_0_3px_rgba(99,102,241,0.15)] transition-shadow">
         {/* Header Tabs */}
         <Tabs defaultValue="write" className="w-full">
           <div className="bg-muted/40 border-b border-border px-2 pt-2">
@@ -113,7 +113,11 @@ export function ChatInput({
                  <span>Attach files</span>
                </div>
                {/* Markdown hint */}
-               <button type="button" className="hidden sm:flex items-center text-xs text-muted-foreground hover:text-blue-500 transition-colors">
+               <button
+                 type="button"
+                 aria-label="Markdown formatting is supported"
+                 className="hidden sm:flex items-center text-xs text-muted-foreground hover:text-blue-500 transition-colors"
+               >
                  <svg className="w-3.5 h-3.5 mr-1" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M14.85 3H1.15C.52 3 0 3.52 0 4.15v7.69C0 12.48.52 13 1.15 13h13.69c.64 0 1.15-.52 1.15-1.15V4.15C16 3.52 15.48 3 14.85 3zM9 11H7V8L5.5 9.92 4 8v3H2V5h2l1.5 2L7 5h2v6zm2.99.5L9.5 8H11V5h2v3h1.5l-2.51 3.5z"></path></svg>
                  Markdown supported
                </button>

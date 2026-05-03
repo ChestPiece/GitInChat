@@ -97,7 +97,7 @@ export default function LoginPage() {
 
         <div className="login-form-item mt-4 border border-white/10 bg-white/[0.02] backdrop-blur-xl rounded-xl p-4 text-center text-sm">
           <span className="text-[var(--pr-text-muted)]">New to GitInChat? </span>
-          <Link href="/auth/signup" className="text-[#6366F1] hover:underline">
+          <Link href="/auth/signup" className="text-[var(--pr-secondary)] hover:underline">
             Create an account
           </Link>
           .

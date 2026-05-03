@@ -50,9 +50,9 @@ export function CommandPalette() {
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
       <CommandInput placeholder="Type a command or search..." />
-      <CommandList className="bg-[#161b22] border-[#30363d]">
+      <CommandList className="bg-[var(--pr-surface)] border-[var(--pr-border)]">
         <CommandEmpty>No results found.</CommandEmpty>
-        <CommandGroup heading="Suggestions" className="text-[#8b949e]">
+        <CommandGroup heading="Suggestions" className="text-[var(--pr-text-muted)]">
           <CommandItem onSelect={() => runCommand(() => router.push('/chat'))}>
             <Plus className="mr-2 h-4 w-4" />
             <span>New Chat</span>
@@ -62,8 +62,8 @@ export function CommandPalette() {
             <span>Search Chats</span>
           </CommandItem>
         </CommandGroup>
-        <CommandSeparator className="bg-[#30363d]" />
-        <CommandGroup heading="Navigation" className="text-[#8b949e]">
+        <CommandSeparator className="bg-[var(--pr-border)]" />
+        <CommandGroup heading="Navigation" className="text-[var(--pr-text-muted)]">
           <CommandItem onSelect={() => runCommand(() => router.push('/profile'))}>
             <User className="mr-2 h-4 w-4" />
             <span>Profile</span>
@@ -75,8 +75,8 @@ export function CommandPalette() {
             <CommandShortcut>⌘S</CommandShortcut>
           </CommandItem>
         </CommandGroup>
-         <CommandSeparator className="bg-[#30363d]" />
-        <CommandGroup heading="Help" className="text-[#8b949e]">
+         <CommandSeparator className="bg-[var(--pr-border)]" />
+        <CommandGroup heading="Help" className="text-[var(--pr-text-muted)]">
           <CommandItem onSelect={() => runCommand(() => window.open('https://github.com', '_blank'))}>
             <Github className="mr-2 h-4 w-4" />
             <span>Open GitHub</span>

@@ -14,11 +14,11 @@ export default async function ProfilePage() {
 
   return (
     <ChatLayoutShell user={user}>
-        <div className="flex h-full bg-[#0d1117] text-white font-sans overflow-hidden relative">
+        <div className="flex h-full bg-[var(--pr-bg)] text-white font-sans overflow-hidden relative">
             
             <main className="flex-1 overflow-auto relative">
                 {/* Ambient Background Gradient */}
-                <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-[#238636]/10 to-transparent pointer-events-none" />
+                <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-[var(--pr-accent)]/10 to-transparent pointer-events-none" />
                 
                 <div className="p-8 max-w-4xl mx-auto relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <PageHeader 

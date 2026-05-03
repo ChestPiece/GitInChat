@@ -96,7 +96,7 @@ export default function SignupPage() {
 
         <div className="signup-form-item mt-4 border border-white/10 bg-white/[0.02] backdrop-blur-xl rounded-xl p-4 text-center text-sm">
           <span className="text-[var(--pr-text-muted)]">Already have an account? </span>
-          <Link href="/auth/login" className="text-[#6366F1] hover:underline">
+          <Link href="/auth/login" className="text-[var(--pr-secondary)] hover:underline">
             Sign in
           </Link>
           .

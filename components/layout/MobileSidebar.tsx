@@ -23,9 +23,14 @@ export function MobileSidebar({ isOpen, onClose, chats, onNewChat }: MobileSideb
       />
       
       {/* Sidebar Container */}
-      <div className="absolute inset-y-0 left-0 w-[296px] bg-[#0d1117] shadow-xl border-r border-[#30363d] animate-in slide-in-from-left duration-200">
+      <div className="absolute inset-y-0 left-0 w-[296px] bg-[var(--pr-bg)] shadow-xl border-r border-[var(--pr-border)] animate-in slide-in-from-left duration-200">
         <div className="absolute top-2 right-2 z-50 md:hidden">
-           <Button variant="ghost" size="icon" onClick={onClose} className="text-[#c9d1d9] hover:text-white hover:bg-[#1f2428]">
+           <Button
+             variant="ghost"
+             size="icon"
+             onClick={onClose}
+             className="text-[var(--pr-text-muted)] hover:text-[var(--pr-text)] hover:bg-[var(--pr-surface-elevated)]"
+           >
              <X className="w-5 h-5" />
            </Button>
         </div>

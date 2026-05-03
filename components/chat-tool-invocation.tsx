@@ -53,10 +53,10 @@ export function ChatToolInvocation({ toolInvocation }: ChatToolInvocationProps) 
       return (
         <div className="space-y-2">
           <div className="text-sm font-medium text-gray-400">Found {repos.length} repositories</div>
-          <ScrollArea className="h-[300px] w-full rounded-md border border-[rgba(255,255,255,0.07)] p-2 bg-[#09090B]">
+          <ScrollArea className="h-[300px] w-full rounded-md border border-[var(--pr-border)] p-2 bg-[var(--pr-bg)]">
             <div className="space-y-2">
               {repos.map((repo: any, i: number) => (
-                <div key={i} className="p-3 bg-[#18181B] border border-[rgba(255,255,255,0.07)] rounded-md hover:border-blue-500 transition-colors">
+                <div key={i} className="p-3 bg-[var(--pr-surface)] border border-[var(--pr-border)] rounded-md hover:border-blue-500 transition-colors">
                   <div className="flex justify-between items-start">
                     <a href={repo.html_url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline font-medium">
                       {repo.full_name}
@@ -83,7 +83,7 @@ export function ChatToolInvocation({ toolInvocation }: ChatToolInvocationProps) 
        if (!repo) return <div className="text-gray-500">No repository details</div>;
 
        return (
-        <div className="p-4 bg-[#18181B] border border-[rgba(255,255,255,0.07)] rounded-md">
+        <div className="p-4 bg-[var(--pr-surface)] border border-[var(--pr-border)] rounded-md">
             <div className="flex justify-between items-start">
                 <a href={repo.html_url} target="_blank" rel="noopener noreferrer" className="text-xl text-blue-400 hover:underline font-bold">
                     {repo.full_name}
@@ -116,7 +116,7 @@ export function ChatToolInvocation({ toolInvocation }: ChatToolInvocationProps) 
                    <div className="flex items-center gap-1"><FileCode className="w-4 h-4"/> File Content</div>
                    {safeResult.truncated && <span className="text-yellow-500">(Truncated)</span>}
                 </div>
-                <div className="bg-[#09090B] border border-[rgba(255,255,255,0.07)] rounded-md p-3 overflow-x-auto">
+                <div className="bg-[var(--pr-bg)] border border-[var(--pr-border)] rounded-md p-3 overflow-x-auto">
                     <pre className="text-xs font-mono text-gray-300">
                         {String(safeResult.content ?? '')}
                     </pre>
@@ -146,7 +146,7 @@ export function ChatToolInvocation({ toolInvocation }: ChatToolInvocationProps) 
                <FileCode className="w-4 h-4" />
                <span>Codebase Search Results</span>
            </div>
-           <div className="bg-[#09090B] border border-[rgba(255,255,255,0.07)] rounded-md p-3 overflow-x-auto text-xs font-mono text-gray-300 whitespace-pre-wrap max-h-[400px] overflow-y-auto custom-scrollbar">
+           <div className="bg-[var(--pr-bg)] border border-[var(--pr-border)] rounded-md p-3 overflow-x-auto text-xs font-mono text-gray-300 whitespace-pre-wrap max-h-[400px] overflow-y-auto custom-scrollbar">
               {content}
            </div>
         </div>
@@ -164,7 +164,7 @@ export function ChatToolInvocation({ toolInvocation }: ChatToolInvocationProps) 
                   <div className="flex items-center gap-1"><FileCode className="w-4 h-4"/> File Content: {toolInvocation.args.filePath}</div>
                   {safeResult.truncated && <span className="text-yellow-500">(Truncated)</span>}
                </div>
-               <div className="bg-[#09090B] border border-[rgba(255,255,255,0.07)] rounded-md p-3 overflow-x-auto max-h-[500px] overflow-y-auto custom-scrollbar">
+               <div className="bg-[var(--pr-bg)] border border-[var(--pr-border)] rounded-md p-3 overflow-x-auto max-h-[500px] overflow-y-auto custom-scrollbar">
                    <pre className="text-xs font-mono text-gray-300">
                        {String(safeResult.content ?? '')}
                    </pre>
@@ -183,7 +183,7 @@ export function ChatToolInvocation({ toolInvocation }: ChatToolInvocationProps) 
     }
 
     return (
-      <div className="bg-[#09090B] p-2 rounded-md border border-[rgba(255,255,255,0.07)] text-xs font-mono text-gray-400 overflow-x-auto">
+      <div className="bg-[var(--pr-bg)] p-2 rounded-md border border-[var(--pr-border)] text-xs font-mono text-gray-400 overflow-x-auto">
         {JSON.stringify(result, null, 2)}
       </div>
     );

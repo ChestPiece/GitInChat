@@ -72,7 +72,7 @@ export function ChatMessage({
       </Avatar>
 
       <div className={cn('flex-1 max-w-3xl min-w-0', isUser && 'flex flex-col items-end')}>
-        <div className={cn('w-full rounded-xl border px-4 py-3 text-sm overflow-x-auto', isUser ? 'bg-[#6366F1]/10 border-[rgba(99,102,241,0.2)] text-[var(--pr-text)]' : 'bg-white/[0.02] border-[var(--pr-border)] border-l-[3px] border-l-[var(--pr-accent)] text-[var(--pr-text)]')}>
+        <div className={cn('w-full rounded-xl border px-4 py-3 text-sm overflow-x-auto', isUser ? 'bg-[var(--pr-secondary)]/10 border-[var(--pr-secondary)]/20 text-[var(--pr-text)]' : 'bg-white/[0.02] border-[var(--pr-border)] border-l-[3px] border-l-[var(--pr-accent)] text-[var(--pr-text)]')}>
           <MessageContent content={textContent} />
           <MessageToolList toolParts={toolParts} toolInvocations={toolInvocations} />
           {!isUser && (
