@@ -1,15 +1,21 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+
+const ENABLED_EVENTS = ['push', 'pull_request', 'issues', 'release', 'watch', 'fork'];
 
 export function RealtimeGithubListener() {
   const supabase = createClient();
   const router = useRouter();
   const lastToastTime = useRef(0);
   const DEBOUNCE_MS = 2000;
+
+  const [enabledEvents, setEnabledEvents] = useState<string[]>([
+    'push', 'pull_request', 'issues'
+  ]);
 
   useEffect(() => {
     let activeChannel: ReturnType<typeof supabase.channel> | null = null;
@@ -35,6 +41,12 @@ export function RealtimeGithubListener() {
         .channel(userChannel)
         .on('broadcast', { event: 'event' }, (payload) => {
           const data = payload.payload;
+
+          // Filter: skip disabled event types
+          if (!enabledEvents.includes(data.type)) {
+            console.log('[Realtime] Event filtered:', data.type);
+            return;
+          }
 
           // Debounce to prevent toast flooding
           const now = Date.now();
@@ -65,7 +77,7 @@ export function RealtimeGithubListener() {
         supabase.removeChannel(activeChannel);
       }
     };
-  }, [supabase, router]);
+  }, [supabase, router, enabledEvents]);
 
   return null; // This component is invisible
 }

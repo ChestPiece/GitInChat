@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { generateEmbedding } from "./embeddings";
+import { logger } from "@/lib/logger";
 
 export interface SearchResult {
   id: number;
@@ -44,7 +45,7 @@ export async function searchSimilarDocuments(
     });
 
     if (error) {
-      console.error("Vector search error:", error);
+      logger.error({ err: error }, 'Vector search failed');
       throw error;
     }
 
@@ -60,14 +61,12 @@ export async function searchSimilarDocuments(
 
     results = results.slice(0, limit);
 
-    console.log(
-      `🔍 Found ${results.length} similar documents for query: "${query.substring(0, 50)}..."`,
-    );
+    logger.debug({ resultCount: results.length, query: query.substring(0, 50) }, 'Found similar documents');
 
     return results;
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error("Error searching documents:", message);
+    logger.error({ err: message }, 'Error searching documents');
     throw error;
   }
 }
@@ -126,7 +125,7 @@ export async function getRepositoryDocuments(
     .order("id", { ascending: true });
 
   if (error) {
-    console.error("Error fetching repository documents:", error);
+    logger.error({ err: error }, 'Error fetching repository documents');
     throw error;
   }
 
@@ -196,7 +195,7 @@ export async function getIndexStats(repoName: string | undefined, userId: string
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error("Error getting index stats:", message);
+    logger.error({ err: message }, 'Error getting index stats');
     throw error;
   }
 }

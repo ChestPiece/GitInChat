@@ -1,6 +1,7 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { generateEmbedding, chunkText } from "./embeddings";
 import type { Octokit } from "octokit";
+import { logger } from "@/lib/logger";
 
 const SECRET_PATH_PATTERNS = [
   /\.env(\.|$)/i,
@@ -57,7 +58,7 @@ export async function indexRepository(
     const { data: repoData } = await octokit.rest.repos.get({ owner, repo });
     const repoId = repoData.id;
 
-    console.log(`📥 Indexing repository: ${owner}/${repo}`);
+    logger.info({ owner, repo }, 'Indexing repository');
 
     const { data: tree } = await octokit.rest.git.getTree({
       owner,
@@ -79,13 +80,13 @@ export async function indexRepository(
     );
     if (totalRepoSize > MAX_REPO_SIZE) {
       const msg = `Repository too large: ${(totalRepoSize / 1024 / 1024).toFixed(2)}MB > ${(MAX_REPO_SIZE / 1024 / 1024).toFixed(0)}MB limit`;
-      console.warn(`⚠️  ${msg}`);
+      logger.warn({ err: msg }, 'Repository too large');
       result.errors.push(msg);
       return result;
     }
 
     result.totalFiles = codeFiles.length;
-    console.log(`📄 Found ${codeFiles.length} code files to index`);
+    logger.debug({ fileCount: codeFiles.length }, 'Found code files to index');
 
     const { error: deleteError } = await supabaseAdmin
       .from("documents")
@@ -94,7 +95,7 @@ export async function indexRepository(
       .eq("metadata->>repo_id", repoId.toString());
 
     if (deleteError) {
-      console.warn("⚠️  Could not delete old documents:", deleteError.message);
+      logger.warn({ err: deleteError.message }, 'Could not delete old documents');
     }
 
     const batchSize = 5;
@@ -170,26 +171,21 @@ export async function indexRepository(
         }),
       );
 
-      console.log(
-        `✅ Indexed batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(
-          codeFiles.length / batchSize,
-        )} (${result.indexedFiles}/${result.totalFiles} files, ${result.totalChunks} chunks)`,
+      logger.debug(
+        { batch: Math.floor(i / batchSize) + 1, totalBatches: Math.ceil(codeFiles.length / batchSize), indexedFiles: result.indexedFiles, totalFiles: result.totalFiles, chunks: result.totalChunks },
+        'Indexed batch'
       );
     }
 
-    console.log(`\n✅ Indexing complete!`);
-    console.log(
-      `   Files indexed: ${result.indexedFiles}/${result.totalFiles}`,
-    );
-    console.log(`   Total chunks: ${result.totalChunks}`);
-    if (result.errors.length > 0) {
-      console.log(`   Errors: ${result.errors.length}`);
-    }
+    logger.info(
+        { indexedFiles: result.indexedFiles, totalFiles: result.totalFiles, totalChunks: result.totalChunks, errorCount: result.errors.length },
+        'Indexing complete'
+      );
 
     return result;
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error);
-    console.error("❌ Indexing failed:", msg);
+    logger.error({ err: msg }, 'Indexing failed');
     throw error;
   }
 }
@@ -204,7 +200,7 @@ export async function reindexFiles(
   userId: string,
   filePaths: string[],
 ): Promise<void> {
-  console.log(`🔄 Re-indexing ${filePaths.length} files in ${owner}/${repo}`);
+  logger.info({ fileCount: filePaths.length, owner, repo }, 'Re-indexing files');
 
   const { data: repoData } = await octokit.rest.repos.get({ owner, repo });
   const repoId = repoData.id;
@@ -248,10 +244,10 @@ export async function reindexFiles(
         });
       }
 
-      console.log(`✅ Re-indexed: ${filePath}`);
+      logger.debug({ filePath }, 'Re-indexed file');
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error);
-      console.error(`❌ Error re-indexing ${filePath}:`, msg);
+      logger.error({ err: msg, filePath }, 'Error re-indexing file');
     }
   }
 }

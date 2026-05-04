@@ -17,9 +17,9 @@ export const indexRepositoryTool = createTool({
     try {
       const supabase = await createClient();
       const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const userId = session?.user?.id;
+        data: { user },
+      } = await supabase.auth.getUser();
+      const userId = user?.id;
       if (!userId) {
         return {
           success: false,
@@ -77,9 +77,9 @@ export const getIndexStatsTool = createTool({
     try {
       const supabase = await createClient();
       const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const userId = session?.user?.id;
+        data: { user },
+      } = await supabase.auth.getUser();
+      const userId = user?.id;
       if (!userId) {
         return {
           success: false,

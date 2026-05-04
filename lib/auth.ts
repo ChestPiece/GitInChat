@@ -13,23 +13,12 @@ export interface User {
 
 export async function signInWithGithub() {
   const supabase = await createClient();
-  const cookieStore = await cookies();
-  const state = crypto.randomUUID();
-
-  cookieStore.set("oauth_state", state, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 10,
-  });
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "github",
     options: {
       redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
       scopes: "repo read:user",
-      queryParams: { state },
     },
   });
 

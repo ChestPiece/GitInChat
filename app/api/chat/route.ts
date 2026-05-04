@@ -62,10 +62,12 @@ const messageTextPartSchema = z.object({
 
 const incomingMessageSchema = z.union([
   z.object({
+    id: z.string().optional(),
     role: z.enum(["user", "assistant"]),
     parts: z.array(messageTextPartSchema).min(1),
   }),
   z.object({
+    id: z.string().optional(),
     role: z.enum(["user", "assistant"]),
     content: z.string().min(1).max(20_000),
   }),
@@ -96,6 +98,7 @@ function normalizeIncomingMessages(raw: z.infer<typeof incomingMessageSchema>[])
   const out: UIMessage[] = [];
   for (const msg of raw) {
     const role = msg.role;
+    const id = msg.id || crypto.randomUUID();
 
     const parts = "parts" in msg
       ? msg.parts
@@ -113,7 +116,7 @@ function normalizeIncomingMessages(raw: z.infer<typeof incomingMessageSchema>[])
         : [];
 
     if (!parts.length) continue;
-    out.push({ role, parts } as UIMessage);
+    out.push({ id, role, parts } as UIMessage);
   }
 
   return out;
@@ -194,16 +197,24 @@ export async function POST(req: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  if (!session?.provider_token) {
+  if (!session?.provider_token && !allowDevBypass) {
     return new Response("GitHub token missing — please sign out and back in.", {
       status: 401,
     });
   }
 
-  // Rate limiting - check before processing
-  if (process.env.NODE_ENV === "production") {
+  // In dev bypass mode without session, skip rate limiting, chat ownership, and RAG
+  const isDevBypass = allowDevBypass && !session;
+  const userId = session?.user?.id;
+
+  if (!userId && !isDevBypass) {
+    return new Response("User ID required", { status: 401 });
+  }
+
+  // Rate limiting - check before processing (skip in dev bypass mode)
+  if (process.env.NODE_ENV === "production" && userId) {
     const { data: rateLimitData, error: rateLimitError } = await supabase.rpc("check_rate_limit", {
-      p_identifier: session.user.id,
+      p_identifier: userId,
       p_action: "chat",
       p_limit: 20,
       p_window_seconds: 60
@@ -244,7 +255,7 @@ export async function POST(req: Request) {
       ? textFromParts(firstMessage.parts).slice(0, 50) + (textFromParts(firstMessage.parts).length > 50 ? '...' : '')
       : 'New Chat';
     
-    const newChat = await chatsService.createChat(chatTitle, session.user.id, supabase);
+    const newChat = await chatsService.createChat(chatTitle, userId!, supabase);
     // Replace null with new chat ID for the rest of the flow
     parsed.data.chatId = newChat.id;
   }
@@ -267,7 +278,7 @@ export async function POST(req: Request) {
 
     try {
       const relevantDocs = await searchSimilarDocuments(userQuery, {
-        userId: session.user.id,
+        userId: userId!,
         limit: 5,
         threshold: 0.7,
       });
@@ -334,6 +345,7 @@ export async function POST(req: Request) {
   const messagesWithRAG: UIMessage[] = ragContext
     ? [
         {
+          id: crypto.randomUUID(),
           role: "user",
           parts: [
             {

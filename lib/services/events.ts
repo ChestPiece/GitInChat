@@ -50,28 +50,8 @@ export async function saveGithubEvent(
 
 /**
  * Fetches recent GitHub events for a specific user (RLS-compliant).
- * Filters by user_id to prevent cross-user data exposure.
- * If userId is not provided, returns empty array for safety.
  */
-export async function getRecentEvents(
-  limitOrUserId?: number | string,
-  limitIfUserIdProvided?: number,
-) {
-  let userId: string | undefined;
-  let limit: number = 10;
-
-  // Handle both old and new calling conventions
-  if (typeof limitOrUserId === "string") {
-    // New convention: getRecentEvents(userId, limit?)
-    userId = limitOrUserId;
-    limit = limitIfUserIdProvided || 10;
-  } else if (typeof limitOrUserId === "number") {
-    // Old convention (deprecated): getRecentEvents(limit)
-    // For backward compatibility, but still requires manual user_id handling
-    limit = limitOrUserId;
-  }
-
-  // Always require user_id to respect RLS
+export async function getRecentEvents(userId: string, limit: number = 10) {
   if (!userId) {
     console.warn(
       "[Events Service] Missing user_id for event retrieval - returning empty for security",
@@ -82,7 +62,7 @@ export async function getRecentEvents(
   const { data, error } = await supabaseAdmin
     .from("github_events")
     .select("*")
-    .eq("user_id", userId) // ← RLS-compliant: filter by authenticated user
+    .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(limit);
 

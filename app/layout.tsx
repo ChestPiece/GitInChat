@@ -19,6 +19,9 @@ export const metadata: Metadata = {
   title: 'GitHub Chat - AI-Powered GitHub Management',
   description: 'Chat with your GitHub agent. Manage repositories, issues, and pull requests with AI assistance.',
   generator: 'v0.app',
+  icons: {
+    icon: '/favicon.svg',
+  },
 }
 
 export const viewport = {

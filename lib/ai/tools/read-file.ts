@@ -33,10 +33,12 @@ export const readProjectFileTool = createTool({
       }
 
       // Security check: Prevent reading sensitive files
+      // Check resolved path, not raw input (prevents lib/../.env bypass)
+      const relativeForBlocklist = path.relative(realProjectRoot, realAbsolutePath);
       if (
-        filePath.includes(".env") ||
-        filePath.includes("node_modules") ||
-        filePath.includes(".git")
+        relativeForBlocklist.includes(".env") ||
+        relativeForBlocklist.includes("node_modules") ||
+        relativeForBlocklist.includes(".git")
       ) {
         return {
           error: "Access denied: Cannot read sensitive or system files.",

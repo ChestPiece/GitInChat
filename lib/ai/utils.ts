@@ -54,7 +54,7 @@ export function validatePathInput(path: string | undefined): {
       error: "Invalid path format - path traversal attempts detected",
     };
   }
-  if (path.includes("..") || path.includes("\\")) {
+  if (path.includes("..") || path.includes("\\") || path.includes("//")) {
     return { valid: false, error: "Path traversal not allowed" };
   }
   if (
