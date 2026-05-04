@@ -30,7 +30,7 @@ export function createTool<T extends z.ZodType<any, any>, R = any>(params: {
         
         // Return a structured error that the AI can understand
         // If the error is already a ToolResult (from createError), return it directly
-        if (error.success === false && error.error) {
+        if (typeof error === 'object' && error !== null && 'success' in error && 'error' in error) {
             return error;
         }
 
