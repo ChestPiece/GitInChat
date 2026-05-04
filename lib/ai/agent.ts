@@ -28,6 +28,12 @@ export const githubAgent = new ToolLoopAgent({
   
   instructions: agentSystemPrompt,
   tools: agentTools,
+  prepareStep: async ({ stepNumber, steps }) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[Agent] Step ${stepNumber}:`, steps.map(s => s.toolCalls?.[0]?.toolName).filter(Boolean));
+    }
+    return {};
+  },
   stopWhen: stepCountIs(15),
 });
 
