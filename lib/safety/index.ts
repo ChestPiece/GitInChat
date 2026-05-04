@@ -4,6 +4,13 @@ const isProduction = process.env.NODE_ENV === "production";
 const hasSafetyApiKey =
   Boolean(process.env.SUPERAGENT_API_KEY) || process.env.NODE_ENV === "test";
 
+function allowDevSafetyBypass() {
+  return (
+    process.env.ALLOW_DEV_SAFETY_BYPASS === "true" &&
+    process.env.NODE_ENV !== "production"
+  );
+}
+
 // SAFETY POLICY:
 // - Production: fail closed for guard checks, fail closed with deterministic local fallback for redaction.
 // - Development: fail open for guard/redaction to avoid blocking local iteration.
@@ -23,8 +30,8 @@ export const safetyClient = createClient({
 
 /**
  * Custom System Prompt for the Guard
- * 
- * We override default strictness because this is a "GitHub Agent" 
+ *
+ * We override default strictness because this is a "GitHub Agent"
  * expected to modify code and repositories.
  */
 export const GITHUB_AGENT_SAFETY_PROMPT = `
@@ -59,7 +66,10 @@ function localRedact(input: string): RedactionResult {
     "<EMAIL>",
   );
   redacted = redacted.replace(/\b(?:\+?\d[\d\s().-]{7,}\d)\b/g, "<PHONE>");
-  redacted = redacted.replace(/\b(?:sk|ghp|github_pat)_[A-Za-z0-9_-]{8,}\b/g, "<TOKEN>");
+  redacted = redacted.replace(
+    /\b(?:sk|ghp|github_pat)_[A-Za-z0-9_-]{8,}\b/g,
+    "<TOKEN>",
+  );
 
   return {
     redacted,
@@ -72,18 +82,27 @@ function localRedact(input: string): RedactionResult {
 /**
  * Redacts PII and sensitive data from text using SuperAgent.
  * Production uses deterministic local fallback when the service is unavailable or slow.
- * Development fails open to avoid blocking local iteration.
+ * Development fails closed unless explicit bypass env is set.
  */
 export async function redactContent(input: string): Promise<RedactionResult> {
   if (!input) {
-    return { redacted: '', original: '', wasRedacted: false, findings: [] };
+    return { redacted: "", original: "", wasRedacted: false, findings: [] };
   }
 
   if (!hasSafetyApiKey) {
     if (isProduction) {
       return localRedact(input);
     }
-    return { redacted: input, original: input, wasRedacted: false, findings: [] };
+    if (allowDevSafetyBypass()) {
+      return {
+        redacted: input,
+        original: input,
+        wasRedacted: false,
+        findings: [],
+      };
+    }
+
+    return localRedact(input);
   }
 
   try {
@@ -91,12 +110,12 @@ export async function redactContent(input: string): Promise<RedactionResult> {
     const redactionPromise = safetyClient.redact({
       input,
       // Use a fast model for redaction
-      model: 'openai/gpt-4o-mini',
+      model: "openai/gpt-4o-mini",
       // Explicitly fail open is handled by catch, but we can also set options if needed
     });
 
-    const timeoutPromise = new Promise<any>((resolve, reject) => 
-      setTimeout(() => reject(new Error('Timeout')), 800)
+    const timeoutPromise = new Promise<any>((resolve, reject) =>
+      setTimeout(() => reject(new Error("Timeout")), 800),
     );
 
     const result = await Promise.race([redactionPromise, timeoutPromise]);
@@ -105,29 +124,34 @@ export async function redactContent(input: string): Promise<RedactionResult> {
       redacted: result.redacted,
       original: input,
       wasRedacted: result.redacted !== input,
-      findings: result.findings || []
+      findings: result.findings || [],
     };
   } catch (error) {
-    if (isProduction) {
-      console.warn('[Safety Redaction] Failed or timed out (Fail Closed with local fallback):', error);
+    if (isProduction || !allowDevSafetyBypass()) {
+      console.warn(
+        "[Safety Redaction] Failed or timed out (Fail Closed with local fallback):",
+        error,
+      );
       return localRedact(input);
     }
 
-    console.warn('[Safety Redaction] Failed or timed out (Fail Open):', error);
+    console.warn("[Safety Redaction] Failed or timed out (Fail Open):", error);
     return {
       redacted: input,
       original: input,
       wasRedacted: false,
-      findings: []
+      findings: [],
     };
   }
 }
 
 /**
  * Validates a message against safety guidelines.
- * Returns null if safe (or fail open), or a Response object if blocked.
+ * Returns null if safe, or a Response object if blocked.
  */
-export async function validateMessageSafety(messages: any[]): Promise<Response | null> {
+export async function validateMessageSafety(
+  messages: any[],
+): Promise<Response | null> {
   if (!hasSafetyApiKey) {
     if (isProduction) {
       return new Response(
@@ -138,53 +162,69 @@ export async function validateMessageSafety(messages: any[]): Promise<Response |
         { status: 503 },
       );
     }
-    return null;
+    if (allowDevSafetyBypass()) {
+      return null;
+    }
+
+    return new Response(
+      JSON.stringify({
+        error: "Safety service is not configured.",
+        code: "safety_unavailable",
+      }),
+      { status: 503 },
+    );
   }
 
   try {
     const lastMessage = messages[messages.length - 1];
-    const content = typeof lastMessage.content === 'string' 
-      ? lastMessage.content 
-      : lastMessage.parts?.find((p: any) => p.type === 'text')?.text || '';
+    const content =
+      typeof lastMessage.content === "string"
+        ? lastMessage.content
+        : lastMessage.parts?.find((p: any) => p.type === "text")?.text || "";
 
     // Only scan if there is text content
     if (content) {
       // Race: Safety Check vs Timeout (800ms)
-      // If check is slow, we proceed (fail open) to avoid lag.
-      const safetyCheckPromise = safetyClient.guard({ 
-        input: content, 
+      // If check is slow, block unless explicit bypass set.
+      const safetyCheckPromise = safetyClient.guard({
+        input: content,
         systemPrompt: GITHUB_AGENT_SAFETY_PROMPT,
-        model: 'openai/gpt-4o-mini'
+        model: "openai/gpt-4o-mini",
       });
 
-      const timeoutPromise = new Promise<{ timeout: true }>((resolve) => 
-        setTimeout(() => resolve({ timeout: true }), 800)
+      const timeoutPromise = new Promise<{ timeout: true }>((resolve) =>
+        setTimeout(() => resolve({ timeout: true }), 800),
       );
 
       const result = await Promise.race([safetyCheckPromise, timeoutPromise]);
 
-      if ('classification' in result && result.classification === 'block') {
-         console.warn("[Safety Guard] Blocked:", result.violation_types);
-         return new Response(JSON.stringify({
-           error: "Request blocked by safety policy.",
-           code: "safety_violation",
-           details: result.violation_types 
-         }), { status: 400 });
-      } else if ('timeout' in result) {
-         if (isProduction) {
-           return new Response(
-             JSON.stringify({
-               error: "Safety service timeout.",
-               code: "safety_timeout",
-             }),
-             { status: 503 },
-           );
-         }
-         console.warn("[Safety Guard] Timeout - Proceeding (Fail Open)");
+      if ("classification" in result && result.classification === "block") {
+        console.warn("[Safety Guard] Blocked:", result.violation_types);
+        return new Response(
+          JSON.stringify({
+            error: "Request blocked by safety policy.",
+            code: "safety_violation",
+            details: result.violation_types,
+          }),
+          { status: 400 },
+        );
+      } else if ("timeout" in result) {
+        if (isProduction || !allowDevSafetyBypass()) {
+          return new Response(
+            JSON.stringify({
+              error: "Safety service timeout.",
+              code: "safety_timeout",
+            }),
+            { status: 503 },
+          );
+        }
+        console.warn(
+          "[Safety Guard] Timeout - Proceeding (Explicit dev bypass)",
+        );
       }
     }
   } catch (error) {
-    if (isProduction) {
+    if (isProduction || !allowDevSafetyBypass()) {
       return new Response(
         JSON.stringify({
           error: "Safety service unavailable.",
@@ -194,8 +234,7 @@ export async function validateMessageSafety(messages: any[]): Promise<Response |
       );
     }
 
-    // Fail Open (development): Log error but allow request to proceed
-    console.error("[Safety Guard] Check Error (Proceeding):", error);
+    console.error("[Safety Guard] Check Error (Explicit dev bypass):", error);
   }
   return null;
 }
