@@ -10,7 +10,7 @@ vi.mock('@/lib/safety', () => ({
 }));
 
 // Import the tool after mocking
-import { scanRepository } from '../lib/ai/tools/repository/scan';
+import { executeScan } from '../lib/ai/tools/repository/scan';
 
 describe('scanRepository Security', () => {
   // Define the schema directly for testing (matching the tool's inputSchema)
@@ -64,13 +64,13 @@ describe('scanRepository Security', () => {
   describe('Execution Logic', () => {
     it('should block non-GitHub URLs even if Zod passed (Defense in Depth)', async () => {
       // The tool's execute function does the runtime check
-      const result = await scanRepository.execute({ repoUrl: 'https://evil.com/repo' });
+      const result = await executeScan({ repoUrl: 'https://evil.com/repo' });
       expect(result.success).toBe(false);
       expect(result.error).toContain('Security Violation');
     });
 
     it('should block bad branch names even if Zod passed', async () => {
-        const result = await scanRepository.execute({ 
+        const result = await executeScan({ 
             repoUrl: 'https://github.com/user/repo',
             branch: '; rm -rf /' 
         });
@@ -79,7 +79,7 @@ describe('scanRepository Security', () => {
     });
 
     it('should proceed for valid inputs', async () => {
-        const result = await scanRepository.execute({ 
+        const result = await executeScan({ 
             repoUrl: 'https://github.com/user/repo',
             branch: 'main' 
         });
