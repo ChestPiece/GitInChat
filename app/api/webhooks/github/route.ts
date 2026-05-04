@@ -11,6 +11,8 @@ const webhooks = new Webhooks({
 });
 
 export async function POST(req: Request) {
+  const requestId = crypto.randomUUID();
+
   try {
     const body = await req.text();
     const headerList = await headers();
@@ -18,13 +20,22 @@ export async function POST(req: Request) {
     const event = headerList.get("x-github-event");
     const deliveryId = headerList.get("x-github-delivery");
 
+    // HR-03: Consistent error codes
     if (!signature) {
-      return new Response("Missing signature", { status: 401 });
+      logger.warn({ requestId }, "Webhook missing signature");
+      return new Response(JSON.stringify({ error: "Invalid request", code: "INVALID_REQUEST" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     // Verify security signature
     if (!(await webhooks.verify(body, signature))) {
-      return new Response("Unauthorized", { status: 401 });
+      logger.warn({ requestId }, "Webhook signature verification failed");
+      return new Response(JSON.stringify({ error: "Unauthorized", code: "UNAUTHORIZED" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     const payload = JSON.parse(body);
@@ -34,11 +45,15 @@ export async function POST(req: Request) {
       null;
 
     if (!event) {
-      return new Response("Missing event header", { status: 400 });
+      logger.warn({ requestId }, "Webhook missing event header");
+      return new Response(JSON.stringify({ error: "Invalid request", code: "INVALID_REQUEST" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     logger.info(
-      { event, repo: payload.repository?.full_name },
+      { event, repo: payload.repository?.full_name, requestId },
       "GitHub webhook received",
     );
 
@@ -54,7 +69,11 @@ export async function POST(req: Request) {
       // 1. Persist to DB (for history/context)
       const persisted = await saveGithubEvent(ownerScopedPayload, deliveryId);
       if (persisted === "duplicate" && deliveryId) {
-        return new Response("Duplicate delivery", { status: 202 });
+        logger.debug({ deliveryId, requestId }, "Duplicate webhook delivery");
+        return new Response(JSON.stringify({ message: "Processed", code: "OK" }), {
+          status: 202,
+          headers: { "Content-Type": "application/json" },
+        });
       }
 
       // 2. Broadcast to 'github-updates' channel (Realtime UI)
@@ -64,29 +83,42 @@ export async function POST(req: Request) {
 
       const status = await supabaseAdmin.channel(ownerChannel).send({
         type: "broadcast",
-        event: "event", // Generic event name, we separate by payload.type
+        event: "event",
         payload: ownerScopedPayload,
       });
 
       if (status !== "ok") {
         logger.error(
-          { status, event: broadcastPayload.type },
-          "Supabase broadcast failed",
+          { status, event: broadcastPayload.type, requestId },
+          "Webhook broadcast failed",
         );
-        return new Response("Broadcast failed", { status: 500 });
+        // HR-03: Don't return 500 for broadcast issues (not client error)
+        // Log for monitoring but return 202 to avoid retry loops
+        return new Response(JSON.stringify({ message: "Processed (broadcast delayed)", code: "OK" }), {
+          status: 202,
+          headers: { "Content-Type": "application/json" },
+        });
       } else {
-        logger.debug({ channel: ownerChannel }, "Broadcast sent successfully");
+        logger.debug({ channel: ownerChannel, requestId }, "Webhook broadcast sent");
       }
+    } else {
+      logger.debug({ event, requestId }, "Webhook event skipped (unsupported)");
+      return new Response(JSON.stringify({ message: "Processed", code: "OK" }), {
+        status: 202,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
-    return new Response("OK", { status: 200 });
+    return new Response(JSON.stringify({ message: "Processed", code: "OK" }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error: unknown) {
-    const { code, status } = mapErrorToCode(error);
-    const requestId = crypto.randomUUID();
-    logger.error({ error, requestId }, "GitHub webhook processing failed");
-    return createErrorResponse(code, "Failed to process webhook", {
-      status,
-      requestId,
+    // HR-03: Don't leak internal error details
+    logger.error({ error, requestId }, "Webhook processing failed");
+    return new Response(JSON.stringify({ error: "Internal error", code: "INTERNAL_ERROR", requestId }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
     });
   }
 }
