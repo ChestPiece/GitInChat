@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button'
 import { Plus, MessageSquare, MoreHorizontal, PanelLeftClose, PanelLeftOpen, Trash2, Edit2, Settings, Search } from 'lucide-react'
+import { GithubActivityFeed } from '@/components/github-activity-feed'
 import Link from 'next/link'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
@@ -273,6 +274,21 @@ export function Sidebar({
           ))
         )}
       </ScrollArea>
+
+      {/* Activity Feed Section - only when expanded */}
+      {!isCollapsed && (
+        <div className="border-t border-[var(--pr-border)]">
+          <details className="group">
+            <summary className="px-3 py-2 text-xs font-medium text-[var(--pr-text-subtle)] cursor-pointer hover:text-[var(--pr-text)] flex items-center justify-between">
+              <span>GitHub Activity</span>
+              <span className="group-open:rotate-90 transition-transform">▶</span>
+            </summary>
+            <div className="px-2 pb-2">
+              <GithubActivityFeed />
+            </div>
+          </details>
+        </div>
+      )}
 
       {/* User profile strip (pinned bottom) */}
       {isCollapsed ? (
