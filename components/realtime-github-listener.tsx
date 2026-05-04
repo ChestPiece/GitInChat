@@ -27,10 +27,10 @@ export function RealtimeGithubListener() {
         return;
       }
 
-      const channelName = `github-updates:${String(githubOwner).toLowerCase()}`;
+      const userChannel = `github-updates:user`;
 
       activeChannel = supabase
-        .channel(channelName)
+        .channel(userChannel)
         .on('broadcast', { event: 'event' }, (payload) => {
           console.log('Realtime Event:', payload);
           const data = payload.payload;

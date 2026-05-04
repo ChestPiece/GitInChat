@@ -99,6 +99,14 @@ export async function POST(req: Request) {
         payload: ownerScopedPayload,
       });
 
+      // Also broadcast to user's personal channel for their own events
+      const userChannel = `github-updates:user`;
+      await supabaseAdmin.channel(userChannel).send({
+        type: "broadcast",
+        event: "event",
+        payload: ownerScopedPayload,
+      });
+
       if (status !== "ok") {
         logger.error(
           { status, event: broadcastPayload.type, requestId },
