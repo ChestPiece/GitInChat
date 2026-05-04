@@ -60,7 +60,7 @@ export const getRepositoryTool = createTool({
         return createError(`Permission denied. You may not have access to ${owner}/${repo}.`);
       }
       
-      throw error;
+      return createError(error.message || "Failed to get repository");
     }
   },
 });
