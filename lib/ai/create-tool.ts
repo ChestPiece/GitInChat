@@ -1,4 +1,4 @@
-import { tool as aiTool } from 'ai';
+import { tool as aiTool, type ToolExecutionOptions } from 'ai';
 import { z } from 'zod';
 import { createError } from './utils';
 
@@ -10,7 +10,7 @@ export function createTool<T extends z.ZodType<any, any>, R = any>(params: {
   return aiTool({
     description: params.description,
     inputSchema: params.inputSchema,
-    execute: async (args: z.infer<T>) => {
+    execute: async (args: z.infer<T>, options: ToolExecutionOptions) => {
       if (process.env.NODE_ENV === 'development') {
         console.log(`[Tool] ${params.description.split('\n')[0].trim().slice(0, 50)}... executing with args:`, JSON.stringify(args, null, 2));
       }

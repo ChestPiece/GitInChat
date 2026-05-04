@@ -34,10 +34,10 @@ export const githubAgent = new ToolLoopAgent({
     }
     return {};
   },
-  onStepFinish: async ({ stepNumber, toolCalls, toolResults }) => {
-    console.log(`[Agent] Step ${stepNumber} complete:`, {
-      toolsCalled: toolCalls?.map(t => t.toolName),
-      resultsCount: toolResults?.length
+  onStepFinish: async (stepResult) => {
+    console.log(`[Agent] Step complete:`, {
+      text: stepResult.text.substring(0, 100),
+      toolCalls: stepResult.toolCalls?.length
     });
   },
   stopWhen: stepCountIs(15),
