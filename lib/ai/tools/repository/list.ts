@@ -1,11 +1,12 @@
 import { createTool } from '../../create-tool';
 import { z } from 'zod';
 import { getGitHubClient } from '@/lib/github/client';
+import { validateNumericParam } from '../../utils';
 
 const listRepositoriesSchema = z.object({
   sort: z.enum(['created', 'updated', 'pushed', 'full_name']).optional().describe('Property to sort by. Default: updated.'),
   direction: z.enum(['asc', 'desc']).optional().describe('Sort direction. Default: desc.'),
-  limit: z.number().min(1).max(100).optional().describe('Number of repos per page. Default: 100. Use fetchAll=true to get all repos.'),
+  limit: z.number().int().min(1).max(100).optional().describe('Number of repos per page. Default: 100. Use fetchAll=true to get all repos.'),
   visibility: z.enum(['all', 'public', 'private']).optional().describe('Filter by visibility. Default: all.'),
   affiliation: z.enum(['owner', 'collaborator', 'organization_member', 'owner,collaborator', 'owner,collaborator,organization_member']).optional().describe('Filter by affiliation. Default: owner,collaborator,organization_member.'),
   fetchAll: z.boolean().optional().describe('Set to true to fetch ALL repositories using pagination. Use this when user asks for all repos.'),
@@ -20,11 +21,24 @@ export const listRepositories = createTool({
   description: 'List repositories of the authenticated user. IMPORTANT: When user asks for "all repos" or "show me everything", set fetchAll=true. To list ARCHIVED repos, set type="archived".',
   inputSchema: listRepositoriesSchema,
   execute: async ({ sort = 'updated', direction = 'desc', limit = 100, visibility = 'all', affiliation = 'owner,collaborator,organization_member', fetchAll = false, type }: z.infer<typeof listRepositoriesSchema>) => {
+    // Validate numeric parameters
+    const limitValidation = validateNumericParam(limit, {
+      name: 'limit',
+      min: 1,
+      max: 100,
+      mustBeInteger: true,
+      allowZero: false,
+    });
+    
+    if (!limitValidation.valid) {
+      return createError(limitValidation.error || 'Invalid limit parameter');
+    }
+
     const octokit = await getGitHubClient();
     try {
       const allRepos: any[] = [];
       let page = 1;
-      const perPage = fetchAll ? 100 : limit;
+      const perPage = fetchAll ? 100 : (limitValidation.value || limit);
       
       // ... (logic remains same)
       let apiVisibility: "all" | "public" | "private" | undefined = visibility as any;

@@ -44,6 +44,18 @@ export const deleteRepositoryTool = createTool({
     { owner, repo, confirm_name }: z.infer<typeof deleteRepositorySchema>,
     options: unknown,
   ) => {
+    // Validate owner and repo parameters
+    const repoValidation = validateRepoInput(owner, repo);
+    if (!repoValidation.valid) {
+      return createError(repoValidation.error || "Invalid repository parameters");
+    }
+
+    // Sanitize confirm_name
+    const confirmValidation = sanitizeStringParam(confirm_name, "confirm_name");
+    if (!confirmValidation.valid) {
+      return createError(confirmValidation.error || "Invalid confirmation name");
+    }
+
     const messages =
       (options as { messages?: Array<any> } | undefined)?.messages ?? [];
     const lastUserMessage = [...messages]
@@ -63,7 +75,7 @@ export const deleteRepositoryTool = createTool({
     const lastUserText = String(lastUserTextRaw || "").trim();
 
     // CRITICAL: Verify confirmation
-    if (confirm_name !== repo) {
+    if (confirmValidation.value !== repo) {
       return createError(
         `Confirmation failed. Please type the exact repository name "${repo}" to confirm deletion.`,
       );
