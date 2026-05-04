@@ -37,7 +37,10 @@ export async function POST(req: Request) {
       return new Response("Missing event header", { status: 400 });
     }
 
-    logger.info({ event, repo: payload.repository?.full_name }, 'GitHub webhook received');
+    logger.info(
+      { event, repo: payload.repository?.full_name },
+      "GitHub webhook received",
+    );
 
     // Strategy Pattern: Dispatch to specific handler
     const broadcastPayload = dispatchEvent(event, payload);
@@ -66,10 +69,13 @@ export async function POST(req: Request) {
       });
 
       if (status !== "ok") {
-        logger.error({ status, event: broadcastPayload.type }, 'Supabase broadcast failed');
-        return new Response("Accepted", { status: 202 });
+        logger.error(
+          { status, event: broadcastPayload.type },
+          "Supabase broadcast failed",
+        );
+        return new Response("Broadcast failed", { status: 500 });
       } else {
-        logger.debug({ channel: ownerChannel }, 'Broadcast sent successfully');
+        logger.debug({ channel: ownerChannel }, "Broadcast sent successfully");
       }
     }
 
@@ -77,7 +83,10 @@ export async function POST(req: Request) {
   } catch (error: unknown) {
     const { code, status } = mapErrorToCode(error);
     const requestId = crypto.randomUUID();
-    logger.error({ error, requestId }, 'GitHub webhook processing failed');
-    return createErrorResponse(code, "Failed to process webhook", { status, requestId });
+    logger.error({ error, requestId }, "GitHub webhook processing failed");
+    return createErrorResponse(code, "Failed to process webhook", {
+      status,
+      requestId,
+    });
   }
 }

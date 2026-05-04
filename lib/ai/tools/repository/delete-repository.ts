@@ -4,11 +4,16 @@ import { getGitHubClient } from "@/lib/github/client";
 import { validateRepoInput, sanitizeStringParam } from "../../utils";
 
 const deleteRepositorySchema = z.object({
-  owner: z.string().min(1).max(39).describe("Repository owner (GitHub username/org)"),
+  owner: z
+    .string()
+    .min(1)
+    .max(39)
+    .describe("Repository owner (GitHub username/org)"),
   repo: z.string().min(1).max(255).describe("Repository name"),
   confirm_name: z
     .string()
-    .min(1).max(255)
+    .min(1)
+    .max(255)
     .describe("User must type exact repo name for confirmation"),
 });
 
@@ -47,13 +52,17 @@ export const deleteRepositoryTool = createTool({
     // Validate owner and repo parameters
     const repoValidation = validateRepoInput(owner, repo);
     if (!repoValidation.valid) {
-      return createError(repoValidation.error || "Invalid repository parameters");
+      return createError(
+        repoValidation.error || "Invalid repository parameters",
+      );
     }
 
     // Sanitize confirm_name
     const confirmValidation = sanitizeStringParam(confirm_name, "confirm_name");
     if (!confirmValidation.valid) {
-      return createError(confirmValidation.error || "Invalid confirmation name");
+      return createError(
+        confirmValidation.error || "Invalid confirmation name",
+      );
     }
 
     const messages =
