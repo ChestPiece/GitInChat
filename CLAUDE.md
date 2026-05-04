@@ -111,7 +111,7 @@ supabase/migrations/         # SQL migrations (versioned)
 - `cn()` for Tailwind class merging; prefer Server Components; `"use client"` only for hooks/interactivity
 
 ### Auth
-- `middleware.ts` protects all routes except `/`, `/auth/*`
+- Route protection via `proxy.ts` (Next.js 15 — middleware deprecated). Page-level Server Components call `getUser()` and redirect unauthenticated requests. Security headers set in `next.config.mjs` `headers()`.
 - GitHub OAuth token from Supabase session as `provider_token`
 
 ## Environment Variables

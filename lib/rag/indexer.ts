@@ -1,6 +1,6 @@
-import { supabaseAdmin } from '@/lib/supabase/admin';
-import { generateEmbedding, chunkText } from './embeddings';
-import type { Octokit } from 'octokit';
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { generateEmbedding, chunkText } from "./embeddings";
+import type { Octokit } from "octokit";
 
 const SECRET_PATH_PATTERNS = [
   /\.env(\.|$)/i,
@@ -37,11 +37,11 @@ export async function indexRepository(
     branch?: string;
     filePatterns?: RegExp[];
     maxFileSize?: number;
-  }
+  },
 ): Promise<IndexResult> {
   const {
     userId,
-    branch = 'HEAD',
+    branch = "HEAD",
     filePatterns = [/\.(ts|tsx|js|jsx|py|java|go|rs|md|txt)$/],
     maxFileSize = MAX_FILE_SIZE,
   } = options;
@@ -63,17 +63,20 @@ export async function indexRepository(
       owner,
       repo,
       tree_sha: branch,
-      recursive: 'true',
+      recursive: "true",
     });
 
     const codeFiles = tree.tree.filter((item) => {
-      if (item.type !== 'blob' || !item.path) return false;
+      if (item.type !== "blob" || !item.path) return false;
       if (SECRET_PATH_PATTERNS.some((p) => p.test(item.path!))) return false;
       return filePatterns.some((pattern) => pattern.test(item.path!));
     });
 
     // HR-07: Check total repo size upfront
-    const totalRepoSize = codeFiles.reduce((sum, file) => sum + (file.size || 0), 0);
+    const totalRepoSize = codeFiles.reduce(
+      (sum, file) => sum + (file.size || 0),
+      0,
+    );
     if (totalRepoSize > MAX_REPO_SIZE) {
       const msg = `Repository too large: ${(totalRepoSize / 1024 / 1024).toFixed(2)}MB > ${(MAX_REPO_SIZE / 1024 / 1024).toFixed(0)}MB limit`;
       console.warn(`⚠️  ${msg}`);
@@ -85,13 +88,13 @@ export async function indexRepository(
     console.log(`📄 Found ${codeFiles.length} code files to index`);
 
     const { error: deleteError } = await supabaseAdmin
-      .from('documents')
+      .from("documents")
       .delete()
-      .eq('user_id', userId)
-      .eq('metadata->>repo_id', repoId.toString());
+      .eq("user_id", userId)
+      .eq("metadata->>repo_id", repoId.toString());
 
     if (deleteError) {
-      console.warn('⚠️  Could not delete old documents:', deleteError.message);
+      console.warn("⚠️  Could not delete old documents:", deleteError.message);
     }
 
     const batchSize = 5;
@@ -110,15 +113,19 @@ export async function indexRepository(
               ref: branch,
             });
 
-            if (!('content' in content)) return;
+            if (!("content" in content)) return;
 
-            const decoded = Buffer.from(content.content, 'base64').toString('utf-8');
+            const decoded = Buffer.from(content.content, "base64").toString(
+              "utf-8",
+            );
 
             // HR-07: Strict file size boundary
             if (decoded.length > maxFileSize) {
               const sizeInMB = (decoded.length / 1024 / 1024).toFixed(2);
               const limitMB = (maxFileSize / 1024 / 1024).toFixed(0);
-              result.errors.push(`File too large: ${file.path} (${sizeInMB}MB > ${limitMB}MB limit)`);
+              result.errors.push(
+                `File too large: ${file.path} (${sizeInMB}MB > ${limitMB}MB limit)`,
+              );
               return;
             }
 
@@ -129,7 +136,7 @@ export async function indexRepository(
               const embedding = await generateEmbedding(chunk);
 
               const { error: insertError } = await supabaseAdmin
-                .from('documents')
+                .from("documents")
                 .insert({
                   user_id: userId,
                   content: chunk,
@@ -147,7 +154,9 @@ export async function indexRepository(
                 });
 
               if (insertError) {
-                result.errors.push(`Error indexing ${file.path}: ${insertError.message}`);
+                result.errors.push(
+                  `Error indexing ${file.path}: ${insertError.message}`,
+                );
               } else {
                 result.totalChunks++;
               }
@@ -158,18 +167,20 @@ export async function indexRepository(
             const msg = error instanceof Error ? error.message : String(error);
             result.errors.push(`Error processing ${file.path}: ${msg}`);
           }
-        })
+        }),
       );
 
       console.log(
         `✅ Indexed batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(
-          codeFiles.length / batchSize
-        )} (${result.indexedFiles}/${result.totalFiles} files, ${result.totalChunks} chunks)`
+          codeFiles.length / batchSize,
+        )} (${result.indexedFiles}/${result.totalFiles} files, ${result.totalChunks} chunks)`,
       );
     }
 
     console.log(`\n✅ Indexing complete!`);
-    console.log(`   Files indexed: ${result.indexedFiles}/${result.totalFiles}`);
+    console.log(
+      `   Files indexed: ${result.indexedFiles}/${result.totalFiles}`,
+    );
     console.log(`   Total chunks: ${result.totalChunks}`);
     if (result.errors.length > 0) {
       console.log(`   Errors: ${result.errors.length}`);
@@ -178,7 +189,7 @@ export async function indexRepository(
     return result;
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error);
-    console.error('❌ Indexing failed:', msg);
+    console.error("❌ Indexing failed:", msg);
     throw error;
   }
 }
@@ -191,7 +202,7 @@ export async function reindexFiles(
   owner: string,
   repo: string,
   userId: string,
-  filePaths: string[]
+  filePaths: string[],
 ): Promise<void> {
   console.log(`🔄 Re-indexing ${filePaths.length} files in ${owner}/${repo}`);
 
@@ -201,11 +212,11 @@ export async function reindexFiles(
   for (const filePath of filePaths) {
     try {
       await supabaseAdmin
-        .from('documents')
+        .from("documents")
         .delete()
-        .eq('user_id', userId)
-        .eq('metadata->>repo_id', repoId.toString())
-        .eq('metadata->>file_path', filePath);
+        .eq("user_id", userId)
+        .eq("metadata->>repo_id", repoId.toString())
+        .eq("metadata->>file_path", filePath);
 
       const { data: content } = await octokit.rest.repos.getContent({
         owner,
@@ -213,16 +224,16 @@ export async function reindexFiles(
         path: filePath,
       });
 
-      if (!('content' in content)) continue;
+      if (!("content" in content)) continue;
 
-      const decoded = Buffer.from(content.content, 'base64').toString('utf-8');
+      const decoded = Buffer.from(content.content, "base64").toString("utf-8");
       const chunks = chunkText(decoded, 1000);
 
       for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
         const chunk = chunks[chunkIndex];
         const embedding = await generateEmbedding(chunk);
 
-        await supabaseAdmin.from('documents').insert({
+        await supabaseAdmin.from("documents").insert({
           user_id: userId,
           content: chunk,
           embedding: embedding,

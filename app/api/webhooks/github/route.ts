@@ -23,19 +23,25 @@ export async function POST(req: Request) {
     // HR-03: Consistent error codes
     if (!signature) {
       logger.warn({ requestId }, "Webhook missing signature");
-      return new Response(JSON.stringify({ error: "Invalid request", code: "INVALID_REQUEST" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "Invalid request", code: "INVALID_REQUEST" }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
 
     // Verify security signature
     if (!(await webhooks.verify(body, signature))) {
       logger.warn({ requestId }, "Webhook signature verification failed");
-      return new Response(JSON.stringify({ error: "Unauthorized", code: "UNAUTHORIZED" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "Unauthorized", code: "UNAUTHORIZED" }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
 
     const payload = JSON.parse(body);
@@ -46,10 +52,13 @@ export async function POST(req: Request) {
 
     if (!event) {
       logger.warn({ requestId }, "Webhook missing event header");
-      return new Response(JSON.stringify({ error: "Invalid request", code: "INVALID_REQUEST" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "Invalid request", code: "INVALID_REQUEST" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
 
     logger.info(
@@ -70,10 +79,13 @@ export async function POST(req: Request) {
       const persisted = await saveGithubEvent(ownerScopedPayload, deliveryId);
       if (persisted === "duplicate" && deliveryId) {
         logger.debug({ deliveryId, requestId }, "Duplicate webhook delivery");
-        return new Response(JSON.stringify({ message: "Processed", code: "OK" }), {
-          status: 202,
-          headers: { "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({ message: "Processed", code: "OK" }),
+          {
+            status: 202,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
       }
 
       // 2. Broadcast to 'github-updates' channel (Realtime UI)
@@ -94,19 +106,31 @@ export async function POST(req: Request) {
         );
         // HR-03: Don't return 500 for broadcast issues (not client error)
         // Log for monitoring but return 202 to avoid retry loops
-        return new Response(JSON.stringify({ message: "Processed (broadcast delayed)", code: "OK" }), {
-          status: 202,
-          headers: { "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({
+            message: "Processed (broadcast delayed)",
+            code: "OK",
+          }),
+          {
+            status: 202,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
       } else {
-        logger.debug({ channel: ownerChannel, requestId }, "Webhook broadcast sent");
+        logger.debug(
+          { channel: ownerChannel, requestId },
+          "Webhook broadcast sent",
+        );
       }
     } else {
       logger.debug({ event, requestId }, "Webhook event skipped (unsupported)");
-      return new Response(JSON.stringify({ message: "Processed", code: "OK" }), {
-        status: 202,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ message: "Processed", code: "OK" }),
+        {
+          status: 202,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
 
     return new Response(JSON.stringify({ message: "Processed", code: "OK" }), {
@@ -116,9 +140,16 @@ export async function POST(req: Request) {
   } catch (error: unknown) {
     // HR-03: Don't leak internal error details
     logger.error({ error, requestId }, "Webhook processing failed");
-    return new Response(JSON.stringify({ error: "Internal error", code: "INTERNAL_ERROR", requestId }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({
+        error: "Internal error",
+        code: "INTERNAL_ERROR",
+        requestId,
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
   }
 }
