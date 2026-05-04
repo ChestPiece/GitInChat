@@ -13,6 +13,10 @@ const SECRET_PATH_PATTERNS = [
   /\.pfx$/i,
 ];
 
+// HR-07: RAG file size boundary
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB per file
+const MAX_REPO_SIZE = 500 * 1024 * 1024; // 500MB per repo
+
 interface IndexResult {
   totalFiles: number;
   indexedFiles: number;
@@ -39,7 +43,7 @@ export async function indexRepository(
     userId,
     branch = 'HEAD',
     filePatterns = [/\.(ts|tsx|js|jsx|py|java|go|rs|md|txt)$/],
-    maxFileSize = 100000, // 100KB
+    maxFileSize = MAX_FILE_SIZE,
   } = options;
 
   const result: IndexResult = {
@@ -67,6 +71,15 @@ export async function indexRepository(
       if (SECRET_PATH_PATTERNS.some((p) => p.test(item.path!))) return false;
       return filePatterns.some((pattern) => pattern.test(item.path!));
     });
+
+    // HR-07: Check total repo size upfront
+    const totalRepoSize = codeFiles.reduce((sum, file) => sum + (file.size || 0), 0);
+    if (totalRepoSize > MAX_REPO_SIZE) {
+      const msg = `Repository too large: ${(totalRepoSize / 1024 / 1024).toFixed(2)}MB > ${(MAX_REPO_SIZE / 1024 / 1024).toFixed(0)}MB limit`;
+      console.warn(`⚠️  ${msg}`);
+      result.errors.push(msg);
+      return result;
+    }
 
     result.totalFiles = codeFiles.length;
     console.log(`📄 Found ${codeFiles.length} code files to index`);
@@ -101,8 +114,11 @@ export async function indexRepository(
 
             const decoded = Buffer.from(content.content, 'base64').toString('utf-8');
 
+            // HR-07: Strict file size boundary
             if (decoded.length > maxFileSize) {
-              result.errors.push(`File too large: ${file.path} (${decoded.length} bytes)`);
+              const sizeInMB = (decoded.length / 1024 / 1024).toFixed(2);
+              const limitMB = (maxFileSize / 1024 / 1024).toFixed(0);
+              result.errors.push(`File too large: ${file.path} (${sizeInMB}MB > ${limitMB}MB limit)`);
               return;
             }
 
