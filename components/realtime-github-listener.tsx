@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -8,6 +8,8 @@ import { useRouter } from 'next/navigation';
 export function RealtimeGithubListener() {
   const supabase = createClient();
   const router = useRouter();
+  const lastToastTime = useRef(0);
+  const DEBOUNCE_MS = 2000;
 
   useEffect(() => {
     let activeChannel: ReturnType<typeof supabase.channel> | null = null;
@@ -32,8 +34,17 @@ export function RealtimeGithubListener() {
       activeChannel = supabase
         .channel(userChannel)
         .on('broadcast', { event: 'event' }, (payload) => {
-          console.log('Realtime Event:', payload);
           const data = payload.payload;
+
+          // Debounce to prevent toast flooding
+          const now = Date.now();
+          if (now - lastToastTime.current < DEBOUNCE_MS) {
+            console.log('[Realtime] Toast debounced:', data.type);
+            return;
+          }
+          lastToastTime.current = now;
+
+          console.log('Realtime Event:', payload);
 
           toast(data.title, {
             description: data.description,
