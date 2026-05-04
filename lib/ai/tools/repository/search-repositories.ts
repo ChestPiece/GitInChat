@@ -46,7 +46,7 @@ export const searchRepositoriesTool = createTool({
       if (error.status === 403) {
           return createError('API rate limit exceeded or permission denied.');
       }
-      throw error;
+      return createError(error.message || "Failed to search repositories");
     }
   },
 });
