@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/client'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Message } from './messages.client'
+import { redactContent } from '@/lib/safety'
 
 export { fetchMessages, type Message } from './messages.client'
 
@@ -12,25 +13,20 @@ export async function createMessage(
   supabaseClient?: SupabaseClient
 ): Promise<Message> {
   const supabase = supabaseClient || createClient()
+  const isProduction = process.env.NODE_ENV === 'production'
   
   // 🛡️ Redact PII before storage
   let safeContent = content;
   try {
-    // Redact PII from both user and assistant messages before storage
     if (content) {
-       const { safetyClient } = await import('@/lib/safety'); 
-       // Uses SuperAgent 'redact' method which requires an LLM provider key
-       // We use a lightweight model for speed/cost.
-       const result = await safetyClient.redact({
-         input: content,
-         model: "openai/gpt-4o-mini" 
-       });
-       safeContent = result.redacted;
+      const result = await redactContent(content)
+      safeContent = result.redacted
     }
   } catch (error) {
-    // Fail Open: If redaction fails (e.g. API error), save the original message
-    // so the chat flow isn't broken.
-    console.warn("[Privacy] Redaction failed (saving raw):", error);
+    if (isProduction) {
+      throw new Error('[Privacy] Redaction failed in production; refusing raw persistence')
+    }
+    console.warn('[Privacy] Redaction failed in development (saving raw):', error)
   }
 
   const { data, error } = await supabase

@@ -1,74 +1,98 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { describe, it, expect, vi } from 'vitest';
-import { POST } from '../app/api/webhooks/github/route';
-
-// Mock Webhooks
 const mocks = vi.hoisted(() => ({
-  verify: vi.fn()
+  verify: vi.fn(),
+  send: vi.fn(),
+  saveGithubEvent: vi.fn(),
+  dispatchEvent: vi.fn(),
 }));
 
 vi.mock('@octokit/webhooks', () => ({
-  Webhooks: vi.fn(function() {
+  Webhooks: vi.fn(function () {
     return { verify: mocks.verify };
-  })
+  }),
 }));
 
-// Mock Headers
 vi.mock('next/headers', () => ({
   headers: () => ({
     get: (key: string) => {
-        if (key === 'x-hub-signature-256') return 'sha256=testsignature';
-        if (key === 'x-github-event') return 'push';
-        return null;
-    }
-  })
+      if (key === 'x-hub-signature-256') return 'sha256=testsignature';
+      if (key === 'x-github-event') return 'push';
+      if (key === 'x-github-delivery') return 'delivery-123';
+      return null;
+    },
+  }),
 }));
 
-// Mock Supabase
-const mockSend = vi.fn();
-vi.mock('@supabase/supabase-js', () => ({
-  createClient: () => ({
-    channel: () => ({
-      send: mockSend
-    })
-  })
+vi.mock('../lib/supabase/admin', () => ({
+  supabaseAdmin: {
+    channel: vi.fn((name: string) => ({
+      send: (...args: any[]) => mocks.send(name, ...args),
+    })),
+  },
 }));
 
+vi.mock('../lib/services/events', () => ({
+  saveGithubEvent: (...args: any[]) => mocks.saveGithubEvent(...args),
+}));
+
+vi.mock('../lib/github/webhooks/dispatcher', () => ({
+  dispatchEvent: (...args: any[]) => mocks.dispatchEvent(...args),
+}));
 
 describe('GitHub Webhook Handler', () => {
-    it('should return 401 if signature is invalid', async () => {
-        mocks.verify.mockResolvedValue(false); // Invalid signature
-        
-        const req = new Request('http://localhost:3000/api/webhooks/github', {
-            method: 'POST',
-            body: JSON.stringify({ test: 'payload' })
-        });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.saveGithubEvent.mockResolvedValue('saved');
+    mocks.send.mockResolvedValue('ok');
+    mocks.dispatchEvent.mockReturnValue({
+      type: 'push',
+      title: 'Push',
+      description: 'tester: commit',
+      repo: 'test/repo',
+      meta: {},
+    });
+  });
 
-        const res = await POST(req);
-        expect(res.status).toBe(401);
+  it('returns 401 if signature is invalid', async () => {
+    mocks.verify.mockResolvedValue(false);
+
+    const { POST } = await import('../app/api/webhooks/github/route');
+    const req = new Request('http://localhost:3000/api/webhooks/github', {
+      method: 'POST',
+      body: JSON.stringify({ test: 'payload' }),
     });
 
-    it('should process event and return 200 if signature is valid', async () => {
-        mocks.verify.mockResolvedValue(true); // Valid signature
-        mockSend.mockResolvedValue({ error: null });
+    const res = await POST(req);
+    expect(res.status).toBe(401);
+  });
 
-        const payload = {
-            repository: { full_name: 'test/repo' },
-            pusher: { name: 'tester' },
-            ref: 'refs/heads/main',
-            head_commit: { message: 'test commit' },
-            commits: [{}]
-        };
+  it('processes valid webhook and broadcasts to owner channel', async () => {
+    mocks.verify.mockResolvedValue(true);
 
-        const req = new Request('http://localhost:3000/api/webhooks/github', {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        });
+    const payload = {
+      repository: { full_name: 'test/repo', owner: { login: 'test-owner' } },
+      pusher: { name: 'tester' },
+      ref: 'refs/heads/main',
+      head_commit: { message: 'test commit' },
+      commits: [{}],
+    };
 
-        const res = await POST(req);
-        expect(res.status).toBe(200);
-        
-        // Should attempt to broadcast
-        expect(mockSend).toHaveBeenCalled();
+    const { POST } = await import('../app/api/webhooks/github/route');
+    const req = new Request('http://localhost:3000/api/webhooks/github', {
+      method: 'POST',
+      body: JSON.stringify(payload),
     });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    expect(mocks.saveGithubEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ repoOwner: 'test-owner' }),
+      'delivery-123'
+    );
+    expect(mocks.send).toHaveBeenCalledWith(
+      'github-updates:test-owner',
+      expect.objectContaining({ type: 'broadcast', event: 'event' })
+    );
+  });
 });

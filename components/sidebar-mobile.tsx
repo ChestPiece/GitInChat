@@ -1,20 +1,20 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Menu, X } from 'lucide-react'
-import { Sidebar } from '@/components/sidebar'
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Menu, X } from "lucide-react";
+import { Sidebar } from "@/components/layout/Sidebar";
 
 interface SidebarMobileProps {
-  userEmail?: string
-  userName?: string
-  userAvatar?: string
+  userEmail?: string;
+  userName?: string;
+  userAvatar?: string;
   chats?: Array<{
-    id: string
-    title: string
-  }>
-  currentChatId?: string
-  onNewChat?: () => Promise<void>
+    id: string;
+    title: string;
+  }>;
+  currentChatId?: string;
+  onNewChat?: () => Promise<void>;
 }
 
 export function SidebarMobile({
@@ -25,7 +25,7 @@ export function SidebarMobile({
   currentChatId,
   onNewChat,
 }: SidebarMobileProps) {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
@@ -39,26 +39,30 @@ export function SidebarMobile({
       </Button>
 
       {isOpen && (
-        <div className="md:hidden fixed inset-0 z-30 bg-black/50" onClick={() => setIsOpen(false)} />
+        <div
+          className="md:hidden fixed inset-0 z-30 bg-black/50"
+          onClick={() => setIsOpen(false)}
+        />
       )}
 
       <div
         className={`md:hidden fixed inset-y-0 left-0 z-40 w-64 transform transition-transform ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+          isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <Sidebar
-          userEmail={userEmail}
-          userName={userName}
-          userAvatar={userAvatar}
-          chats={chats}
-          currentChatId={currentChatId}
+          user={{ name: userName, email: userEmail, image: userAvatar }}
+          chats={(chats ?? []).map((chat) => ({
+            id: chat.id,
+            title: chat.title,
+            active: chat.id === currentChatId,
+          }))}
           onNewChat={() => {
-            setIsOpen(false)
-            return onNewChat?.() || Promise.resolve()
+            setIsOpen(false);
+            void onNewChat?.();
           }}
         />
       </div>
     </>
-  )
+  );
 }

@@ -1,11 +1,13 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
+
+import "server-only";
 
 // VibeSec: Use strict checks for environment variables to fail fast if missing
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  console.warn('[Supabase Admin] SUPABASE_SERVICE_ROLE_KEY is missing. Falling back to ANON key. Database writes may fail if RLS is strict.');
+if (!supabaseServiceKey) {
+  throw new Error("[Supabase Admin] SUPABASE_SERVICE_ROLE_KEY is missing.");
 }
 
 /**

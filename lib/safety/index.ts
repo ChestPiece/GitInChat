@@ -1,9 +1,12 @@
 import { createClient } from "safety-agent";
 
-// SAFETY: This module fails open by design. If SuperAgent is unavailable or slow
-// (>800ms), the request proceeds. This is intentional — GitHub management ops should
-// not be blocked by a safety service outage. Adjust the timeout or add stricter
-// enforcement here if needed for production hardening.
+const isProduction = process.env.NODE_ENV === "production";
+const hasSafetyApiKey =
+  Boolean(process.env.SUPERAGENT_API_KEY) || process.env.NODE_ENV === "test";
+
+// SAFETY POLICY:
+// - Production: fail closed for guard checks, fail closed with deterministic local fallback for redaction.
+// - Development: fail open for guard/redaction to avoid blocking local iteration.
 /**
  * SuperAgent Safety Client
  *
@@ -14,8 +17,8 @@ import { createClient } from "safety-agent";
 export const safetyClient = createClient({
   // Fallback endpoint is returning invalid JSON, disabling for now to rely on primary
   enableFallback: false,
-  // Required by SDK even for free tier
-  apiKey: process.env.SUPERAGENT_API_KEY || "dummy-key-for-free-tier", 
+  // SDK requires a value; production behavior is enforced by runtime guards below.
+  apiKey: process.env.SUPERAGENT_API_KEY || "missing-superagent-api-key",
 });
 
 /**
@@ -47,13 +50,40 @@ export interface RedactionResult {
   findings: string[];
 }
 
+function localRedact(input: string): RedactionResult {
+  let redacted = input;
+
+  // Basic deterministic masking for common sensitive values.
+  redacted = redacted.replace(
+    /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi,
+    "<EMAIL>",
+  );
+  redacted = redacted.replace(/\b(?:\+?\d[\d\s().-]{7,}\d)\b/g, "<PHONE>");
+  redacted = redacted.replace(/\b(?:sk|ghp|github_pat)_[A-Za-z0-9_-]{8,}\b/g, "<TOKEN>");
+
+  return {
+    redacted,
+    original: input,
+    wasRedacted: redacted !== input,
+    findings: redacted !== input ? ["local_redaction_fallback"] : [],
+  };
+}
+
 /**
  * Redacts PII and sensitive data from text using SuperAgent.
- * Fails open (returns original text) if the service is down or slow.
+ * Production uses deterministic local fallback when the service is unavailable or slow.
+ * Development fails open to avoid blocking local iteration.
  */
 export async function redactContent(input: string): Promise<RedactionResult> {
   if (!input) {
     return { redacted: '', original: '', wasRedacted: false, findings: [] };
+  }
+
+  if (!hasSafetyApiKey) {
+    if (isProduction) {
+      return localRedact(input);
+    }
+    return { redacted: input, original: input, wasRedacted: false, findings: [] };
   }
 
   try {
@@ -78,8 +108,12 @@ export async function redactContent(input: string): Promise<RedactionResult> {
       findings: result.findings || []
     };
   } catch (error) {
+    if (isProduction) {
+      console.warn('[Safety Redaction] Failed or timed out (Fail Closed with local fallback):', error);
+      return localRedact(input);
+    }
+
     console.warn('[Safety Redaction] Failed or timed out (Fail Open):', error);
-    // Fail open: Return original content
     return {
       redacted: input,
       original: input,
@@ -94,6 +128,19 @@ export async function redactContent(input: string): Promise<RedactionResult> {
  * Returns null if safe (or fail open), or a Response object if blocked.
  */
 export async function validateMessageSafety(messages: any[]): Promise<Response | null> {
+  if (!hasSafetyApiKey) {
+    if (isProduction) {
+      return new Response(
+        JSON.stringify({
+          error: "Safety service is not configured.",
+          code: "safety_unavailable",
+        }),
+        { status: 503 },
+      );
+    }
+    return null;
+  }
+
   try {
     const lastMessage = messages[messages.length - 1];
     const content = typeof lastMessage.content === 'string' 
@@ -124,11 +171,30 @@ export async function validateMessageSafety(messages: any[]): Promise<Response |
            details: result.violation_types 
          }), { status: 400 });
       } else if ('timeout' in result) {
+         if (isProduction) {
+           return new Response(
+             JSON.stringify({
+               error: "Safety service timeout.",
+               code: "safety_timeout",
+             }),
+             { status: 503 },
+           );
+         }
          console.warn("[Safety Guard] Timeout - Proceeding (Fail Open)");
       }
     }
   } catch (error) {
-    // Fail Open: Log error but allow request to proceed
+    if (isProduction) {
+      return new Response(
+        JSON.stringify({
+          error: "Safety service unavailable.",
+          code: "safety_unavailable",
+        }),
+        { status: 503 },
+      );
+    }
+
+    // Fail Open (development): Log error but allow request to proceed
     console.error("[Safety Guard] Check Error (Proceeding):", error);
   }
   return null;

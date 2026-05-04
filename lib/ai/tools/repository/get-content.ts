@@ -9,14 +9,21 @@ const getRepositoryFileContentSchema = z.object({
   path: z.string().describe('Path to the file'),
 });
 
-import { createSuccess, createError } from '../../utils';
-
-// ... (schema remains)
+import { createSuccess, createError, validateRepoInput, validatePathInput } from '../../utils';
 
 export const getRepositoryFileContent = createTool({
   description: 'Get the content of a file in a repository. Use this to read code or config files.',
   inputSchema: getRepositoryFileContentSchema,
   execute: async ({ owner, repo, path }: z.infer<typeof getRepositoryFileContentSchema>) => {
+    const repoValidation = validateRepoInput(owner, repo);
+    if (!repoValidation.valid) {
+      return createError(repoValidation.error || 'Invalid input');
+    }
+    const pathValidation = validatePathInput(path);
+    if (!pathValidation.valid) {
+      return createError(pathValidation.error || 'Invalid path');
+    }
+
     const octokit = await getGitHubClient();
     try {
       const { data } = await octokit.rest.repos.getContent({

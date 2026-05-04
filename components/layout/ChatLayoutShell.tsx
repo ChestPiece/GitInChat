@@ -6,6 +6,16 @@ import { Sidebar } from './Sidebar'
 import { MobileSidebar } from './MobileSidebar'
 import { useChats } from '@/hooks/use-chats'
 import { usePathname, useRouter } from 'next/navigation'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 interface ChatLayoutShellProps {
   children: ReactNode
@@ -18,6 +28,7 @@ export function ChatLayoutShell({ children, user }: ChatLayoutShellProps) {
   const { chats, addChat, deleteChat, updateChat } = useChats()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [pendingDeleteChatId, setPendingDeleteChatId] = useState<string | null>(null)
 
   const handleNewChat = async () => {
     try {
@@ -32,15 +43,21 @@ export function ChatLayoutShell({ children, user }: ChatLayoutShellProps) {
   }
 
   const handleDeleteChat = async (id: string) => {
-    if (confirm('Are you sure you want to delete this chat?')) {
-      try {
-        await deleteChat(id)
-        if (pathname === `/chat/${id}`) {
-          router.push('/chat')
-        }
-      } catch (error) {
-        console.error('Failed to delete chat:', error)
+    setPendingDeleteChatId(id)
+  }
+
+  const confirmDeleteChat = async () => {
+    if (!pendingDeleteChatId) return
+    const id = pendingDeleteChatId
+    try {
+      await deleteChat(id)
+      if (pathname === `/chat/${id}`) {
+        router.push('/chat')
       }
+    } catch (error) {
+      console.error('Failed to delete chat:', error)
+    } finally {
+      setPendingDeleteChatId(null)
     }
   }
 
@@ -102,6 +119,26 @@ export function ChatLayoutShell({ children, user }: ChatLayoutShellProps) {
           {children}
         </main>
       </div>
+
+      <AlertDialog open={pendingDeleteChatId !== null} onOpenChange={(open) => !open && setPendingDeleteChatId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete chat?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes this chat and its messages from your history.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteChat}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

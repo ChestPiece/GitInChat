@@ -2,7 +2,9 @@ import { Webhooks } from "@octokit/webhooks";
 import { headers } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { saveGithubEvent } from "@/lib/services/events";
-import { dispatchEvent } from '@/lib/github/webhooks/dispatcher';
+import { dispatchEvent } from "@/lib/github/webhooks/dispatcher";
+import { logger } from "@/lib/logger";
+import { createErrorResponse, mapErrorToCode, ErrorCode } from "@/lib/errors";
 
 const webhooks = new Webhooks({
   secret: process.env.GITHUB_WEBHOOK_SECRET!,
@@ -10,79 +12,72 @@ const webhooks = new Webhooks({
 
 export async function POST(req: Request) {
   try {
-
-    console.log('[GitHub Webhook] Debug:', {
-      NODE_ENV: process.env.NODE_ENV,
-      secretSet: !!process.env.GITHUB_WEBHOOK_SECRET,
-    });
     const body = await req.text();
     const headerList = await headers();
     const signature = headerList.get("x-hub-signature-256");
     const event = headerList.get("x-github-event");
+    const deliveryId = headerList.get("x-github-delivery");
 
     if (!signature) {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('[GitHub Webhook] Missing signature in development');
-        return new Response(JSON.stringify({
-          message: 'Missing signature (development bypass)',
-          debug: {
-            NODE_ENV: process.env.NODE_ENV,
-            secretSet: !!process.env.GITHUB_WEBHOOK_SECRET,
-            providedSignature: signature
-          }
-        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-      }
-      return new Response('Missing signature', { status: 401 });
+      return new Response("Missing signature", { status: 401 });
     }
 
     // Verify security signature
     if (!(await webhooks.verify(body, signature))) {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('[GitHub Webhook] Invalid signature in development');
-        return new Response(JSON.stringify({
-          message: 'Invalid signature (development bypass)',
-          debug: {
-            NODE_ENV: process.env.NODE_ENV,
-            secretSet: !!process.env.GITHUB_WEBHOOK_SECRET,
-            providedSignature: signature,
-          }
-        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-      }
-      return new Response('Unauthorized', { status: 401 });
+      return new Response("Unauthorized", { status: 401 });
     }
 
     const payload = JSON.parse(body);
-    
+    const repoOwner =
+      payload?.repository?.owner?.login ??
+      payload?.repository?.owner?.name ??
+      null;
+
     if (!event) {
-        return new Response("Missing event header", { status: 400 });
+      return new Response("Missing event header", { status: 400 });
     }
 
-    console.log(`[GitHub Webhook] Received ${event} event for ${payload.repository?.full_name}`);
+    logger.info({ event, repo: payload.repository?.full_name }, 'GitHub webhook received');
 
     // Strategy Pattern: Dispatch to specific handler
     const broadcastPayload = dispatchEvent(event, payload);
 
     if (broadcastPayload) {
+      const ownerScopedPayload = {
+        ...broadcastPayload,
+        repoOwner,
+      };
+
       // 1. Persist to DB (for history/context)
-      await saveGithubEvent(broadcastPayload);
+      const persisted = await saveGithubEvent(ownerScopedPayload, deliveryId);
+      if (persisted === "duplicate" && deliveryId) {
+        return new Response("Duplicate delivery", { status: 202 });
+      }
 
       // 2. Broadcast to 'github-updates' channel (Realtime UI)
-      const status = await supabaseAdmin.channel('github-updates').send({
-        type: 'broadcast',
-        event: 'event', // Generic event name, we separate by payload.type
-        payload: broadcastPayload
+      const ownerChannel = repoOwner
+        ? `github-updates:${String(repoOwner).toLowerCase()}`
+        : "github-updates:unknown";
+
+      const status = await supabaseAdmin.channel(ownerChannel).send({
+        type: "broadcast",
+        event: "event", // Generic event name, we separate by payload.type
+        payload: ownerScopedPayload,
       });
 
-      if (status !== 'ok') {
-        console.error('[GitHub Webhook] Supabase Broadcast Error Status:', status);
+      if (status !== "ok") {
+        logger.error({ status, event: broadcastPayload.type }, 'Supabase broadcast failed');
+        return new Response("Accepted", { status: 202 });
       } else {
-        console.log('[GitHub Webhook] Broadcast sent successfully');
+        logger.debug({ channel: ownerChannel }, 'Broadcast sent successfully');
       }
     }
 
     return new Response("OK", { status: 200 });
   } catch (error: unknown) {
-    console.error("[GitHub Webhook] Error processing request:", error);
-    return new Response("Internal server error", { status: 500 });
+    const { code, status } = mapErrorToCode(error);
+    const requestId = crypto.randomUUID();
+    logger.error({ error, requestId }, 'GitHub webhook processing failed');
+    return createErrorResponse(code, "Failed to process webhook", { status, requestId });
   }
 }

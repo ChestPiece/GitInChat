@@ -1,5 +1,5 @@
-import { supabaseAdmin } from '@/lib/supabase/admin';
-import { generateEmbedding } from './embeddings';
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { generateEmbedding } from "./embeddings";
 
 export interface SearchResult {
   id: number;
@@ -16,7 +16,6 @@ export interface SearchResult {
 }
 
 export type SearchOptions = {
-  /** Required: only return chunks indexed for this Supabase auth user. */
   userId: string;
   repoName?: string;
   repoId?: number;
@@ -26,41 +25,33 @@ export type SearchOptions = {
 
 /**
  * Search for similar documents using vector similarity search.
- * Scoped to the given user (RAG tenant isolation).
+ * The index is shared and filtered by repository metadata.
  */
 export async function searchSimilarDocuments(
   query: string,
-  options: SearchOptions
+  options: SearchOptions,
 ): Promise<SearchResult[]> {
-  const {
-    userId,
-    repoName,
-    repoId,
-    limit = 5,
-    threshold = 0.7,
-  } = options;
+  const { userId, repoName, repoId, limit = 5, threshold = 0.7 } = options;
 
   try {
     const queryEmbedding = await generateEmbedding(query);
 
-    const { data, error } = await supabaseAdmin.rpc('match_documents', {
+    const { data, error } = await supabaseAdmin.rpc("match_documents", {
       query_embedding: queryEmbedding,
+      filter_user_id: userId,
       match_threshold: threshold,
       match_count: limit,
-      filter_user_id: userId,
     });
 
     if (error) {
-      console.error('Vector search error:', error);
+      console.error("Vector search error:", error);
       throw error;
     }
 
     let results = (data || []) as SearchResult[];
 
     if (repoName) {
-      results = results.filter(
-        (doc) => doc.metadata?.repo_name === repoName
-      );
+      results = results.filter((doc) => doc.metadata?.repo_name === repoName);
     }
 
     if (repoId !== undefined) {
@@ -70,19 +61,19 @@ export async function searchSimilarDocuments(
     results = results.slice(0, limit);
 
     console.log(
-      `🔍 Found ${results.length} similar documents for query: "${query.substring(0, 50)}..."`
+      `🔍 Found ${results.length} similar documents for query: "${query.substring(0, 50)}..."`,
     );
 
     return results;
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error('Error searching documents:', message);
+    console.error("Error searching documents:", message);
     throw error;
   }
 }
 
 /**
- * Search within a specific file or directory path (user-scoped).
+ * Search within a specific file or directory path.
  */
 export async function searchInPath(
   query: string,
@@ -91,17 +82,17 @@ export async function searchInPath(
     userId: string;
     limit?: number;
     threshold?: number;
-  }
+  },
 ): Promise<SearchResult[]> {
-  const { limit = 5, threshold = 0.7, userId } = options;
+  const { userId, limit = 5, threshold = 0.7 } = options;
 
   const queryEmbedding = await generateEmbedding(query);
 
-  const { data, error } = await supabaseAdmin.rpc('match_documents', {
+  const { data, error } = await supabaseAdmin.rpc("match_documents", {
     query_embedding: queryEmbedding,
+    filter_user_id: userId,
     match_threshold: threshold,
     match_count: limit * 2,
-    filter_user_id: userId,
   });
 
   if (error) throw error;
@@ -114,7 +105,7 @@ export async function searchInPath(
 }
 
 /**
- * Get all documents for a specific repository (without semantic search), user-scoped.
+ * Get all documents for a specific repository (without semantic search).
  */
 export async function getRepositoryDocuments(
   repoName: string,
@@ -122,20 +113,20 @@ export async function getRepositoryDocuments(
     userId: string;
     limit?: number;
     offset?: number;
-  }
+  },
 ): Promise<SearchResult[]> {
-  const { limit = 100, offset = 0, userId } = options;
+  const { userId, limit = 100, offset = 0 } = options;
 
   const { data, error } = await supabaseAdmin
-    .from('documents')
-    .select('id, content, metadata')
-    .eq('user_id', userId)
-    .eq('metadata->>repo_name', repoName)
+    .from("documents")
+    .select("id, content, metadata")
+    .eq("user_id", userId)
+    .eq("metadata->>repo_name", repoName)
     .range(offset, offset + limit - 1)
-    .order('id', { ascending: true });
+    .order("id", { ascending: true });
 
   if (error) {
-    console.error('Error fetching repository documents:', error);
+    console.error("Error fetching repository documents:", error);
     throw error;
   }
 
@@ -146,25 +137,20 @@ export async function getRepositoryDocuments(
 }
 
 /**
- * Get statistics about indexed documents (optionally scoped to one user).
+ * Get statistics about indexed documents.
  */
-export async function getIndexStats(
-  repoName?: string,
-  userId?: string
-): Promise<{
+export async function getIndexStats(repoName: string | undefined, userId: string): Promise<{
   totalDocuments: number;
   totalRepos: number;
   repoBreakdown?: { repo_name: string; count: number }[];
 }> {
   try {
     if (repoName) {
-      let q = supabaseAdmin
-        .from('documents')
-        .select('*', { count: 'exact', head: true })
-        .eq('metadata->>repo_name', repoName);
-      if (userId) {
-        q = q.eq('user_id', userId);
-      }
+      const q = supabaseAdmin
+        .from("documents")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("metadata->>repo_name", repoName);
       const { count, error } = await q;
 
       if (error) throw error;
@@ -175,20 +161,18 @@ export async function getIndexStats(
       };
     }
 
-    let countQuery = supabaseAdmin
-      .from('documents')
-      .select('*', { count: 'exact', head: true });
-    if (userId) {
-      countQuery = countQuery.eq('user_id', userId);
-    }
+    const countQuery = supabaseAdmin
+      .from("documents")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId);
     const { count, error: countError } = await countQuery;
 
     if (countError) throw countError;
 
-    let docsQuery = supabaseAdmin.from('documents').select('metadata');
-    if (userId) {
-      docsQuery = docsQuery.eq('user_id', userId);
-    }
+    const docsQuery = supabaseAdmin
+      .from("documents")
+      .select("metadata")
+      .eq("user_id", userId);
     const { data: docs, error: docsError } = await docsQuery;
 
     if (docsError) throw docsError;
@@ -212,7 +196,7 @@ export async function getIndexStats(
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error('Error getting index stats:', message);
+    console.error("Error getting index stats:", message);
     throw error;
   }
 }

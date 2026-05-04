@@ -1,17 +1,22 @@
-import { createTool } from '../../create-tool';
-import { z } from 'zod';
-import { getGitHubClient } from '@/lib/github/client';
+import { createTool } from "../../create-tool";
+import { z } from "zod";
+import { getGitHubClient } from "@/lib/github/client";
 
 const batchExecuteSchema = z.object({
-  operation: z.enum(['archive', 'unarchive', 'star', 'unstar']).describe(
-    'Operation to perform on each repository (use deleteRepository for single-repo delete with confirmation)'
-  ),
-  repositories: z.array(z.string()).describe(
-    'List of "owner/repo" strings to operate on'
-  ),
-  dryRun: z.boolean().optional().describe(
-    'If true, report what would happen without executing. Default: false'
-  ),
+  operation: z
+    .enum(["archive", "unarchive", "star", "unstar"])
+    .describe(
+      "Operation to perform on each repository (use deleteRepository for single-repo delete with confirmation)",
+    ),
+  repositories: z
+    .array(z.string())
+    .describe('List of "owner/repo" strings to operate on'),
+  dryRun: z
+    .boolean()
+    .optional()
+    .describe(
+      "If true, report what would happen without executing. Default: false",
+    ),
 });
 
 type BatchResult = {
@@ -24,17 +29,23 @@ async function executeOp(
   octokit: Awaited<ReturnType<typeof getGitHubClient>>,
   operation: string,
   owner: string,
-  repo: string
+  repo: string,
 ) {
   switch (operation) {
-    case 'archive':
+    case "archive":
       return octokit.rest.repos.update({ owner, repo, archived: true });
-    case 'unarchive':
+    case "unarchive":
       return octokit.rest.repos.update({ owner, repo, archived: false });
-    case 'star':
-      return octokit.rest.activity.starRepoForAuthenticatedUser({ owner, repo });
-    case 'unstar':
-      return octokit.rest.activity.unstarRepoForAuthenticatedUser({ owner, repo });
+    case "star":
+      return octokit.rest.activity.starRepoForAuthenticatedUser({
+        owner,
+        repo,
+      });
+    case "unstar":
+      return octokit.rest.activity.unstarRepoForAuthenticatedUser({
+        owner,
+        repo,
+      });
     default:
       throw new Error(`Unknown operation: ${operation}`);
   }
@@ -42,13 +53,13 @@ async function executeOp(
 
 export const batchExecuteRepositoryOps = createTool({
   description:
-    'Execute a management operation (archive, unarchive, star, unstar) across multiple repositories. Use deleteRepository for deletes (per-repo confirmation). Use when the user wants the same action on many repos (>3). Respects GitHub rate limits.',
+    "Execute a management operation (archive, unarchive, star, unstar) across multiple repositories. Use deleteRepository for deletes (per-repo confirmation). Use when the user wants the same action on many repos (>3). Respects GitHub rate limits.",
 
   inputSchema: batchExecuteSchema,
 
   execute: async ({ operation, repositories, dryRun = false }) => {
     if (repositories.length === 0) {
-      return { success: false, error: 'No repositories provided.' };
+      return { success: false, error: "No repositories provided." };
     }
 
     if (dryRun) {
@@ -59,7 +70,7 @@ export const batchExecuteRepositoryOps = createTool({
           operation,
           would_affect: repositories,
           count: repositories.length,
-          message: `Dry run: would ${operation} ${repositories.length} repositor${repositories.length === 1 ? 'y' : 'ies'}.`,
+          message: `Dry run: would ${operation} ${repositories.length} repositor${repositories.length === 1 ? "y" : "ies"}.`,
         },
       };
     }
@@ -73,9 +84,13 @@ export const batchExecuteRepositoryOps = createTool({
       const batch = repositories.slice(i, i + BATCH_SIZE);
 
       for (const fullName of batch) {
-        const [owner, repo] = fullName.split('/');
+        const [owner, repo] = fullName.split("/");
         if (!owner || !repo) {
-          results.push({ repo: fullName, success: false, error: 'Invalid format — use "owner/repo"' });
+          results.push({
+            repo: fullName,
+            success: false,
+            error: 'Invalid format — use "owner/repo"',
+          });
           continue;
         }
 
@@ -84,21 +99,23 @@ export const batchExecuteRepositoryOps = createTool({
 
           // Check rate limit from response headers
           const remaining = parseInt(
-            (response as any).headers?.['x-ratelimit-remaining'] ?? '1000',
-            10
+            (response as any).headers?.["x-ratelimit-remaining"] ?? "1000",
+            10,
           );
           if (remaining < 100) {
             results.push({ repo: fullName, success: true });
-            const completed = results.filter(r => r.success).length;
+            const completed = results.filter((r) => r.success).length;
             const processedNames = new Set(
-              results.filter(r => r.success).map(r => r.repo)
+              results.filter((r) => r.success).map((r) => r.repo),
             );
-            const remainingRepos = repositories.filter(r => !processedNames.has(r));
+            const remainingRepos = repositories.filter(
+              (r: string) => !processedNames.has(r),
+            );
             return {
               success: true,
               data: {
                 paused: true,
-                reason: 'Rate limit low',
+                reason: "Rate limit low",
                 ratelimit_remaining: remaining,
                 completed,
                 total: repositories.length,
@@ -114,19 +131,19 @@ export const batchExecuteRepositoryOps = createTool({
           results.push({
             repo: fullName,
             success: false,
-            error: error.message || 'Unknown error',
+            error: error.message || "Unknown error",
           });
         }
       }
 
       // Small delay between batches
       if (i + BATCH_SIZE < repositories.length) {
-        await new Promise(resolve => setTimeout(resolve, BATCH_DELAY_MS));
+        await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY_MS));
       }
     }
 
-    const succeeded = results.filter(r => r.success).length;
-    const failed = results.filter(r => !r.success);
+    const succeeded = results.filter((r) => r.success).length;
+    const failed = results.filter((r) => !r.success);
 
     return {
       success: true,
@@ -139,8 +156,8 @@ export const batchExecuteRepositoryOps = createTool({
         failures: failed.length > 0 ? failed : undefined,
         message:
           failed.length > 0
-            ? `${operation}: ${succeeded}/${repositories.length} succeeded. ${failed.length} failed: ${failed.map(f => `${f.repo} (${f.error})`).join(', ')}`
-            : `${operation}: all ${succeeded} repositor${succeeded === 1 ? 'y' : 'ies'} updated successfully.`,
+            ? `${operation}: ${succeeded}/${repositories.length} succeeded. ${failed.length} failed: ${failed.map((f) => `${f.repo} (${f.error})`).join(", ")}`
+            : `${operation}: all ${succeeded} repositor${succeeded === 1 ? "y" : "ies"} updated successfully.`,
       },
     };
   },
