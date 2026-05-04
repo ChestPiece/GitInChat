@@ -1,6 +1,7 @@
 -- Create table for storing GitHub events
 create table if not exists github_events (
   id uuid default gen_random_uuid() primary key,
+  github_delivery_id text unique,
   type text not null, -- 'push', 'pull_request', etc.
   payload jsonb not null, -- The simplified broadcast payload
   repo_name text,
