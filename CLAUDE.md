@@ -1,24 +1,40 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code (claude.ai/code) in this repo.
 
 ## What This App Is
 
-GitInChat is an AI-powered GitHub management assistant. Users authenticate via GitHub OAuth and chat with an AI agent that can manage repos, issues, PRs, and branches in natural language. Supports real-time GitHub event streaming via webhooks and RAG-powered semantic code search.
+GitInChat: AI-powered GitHub management assistant. Users auth via GitHub OAuth, chat with AI agent to manage repos, issues, PRs, branches in natural language. Real-time GitHub event streaming via webhooks, RAG-powered semantic code search.
 
 ## Tech Stack
 
 ### Framework
-- **Next.js 15+ App Router** — `app/` directory, Server Components by default, `"use client"` only when needed
+- **Next.js 15+ App Router** — `app/` dir, Server Components by default, `"use client"` only when needed
 - **TypeScript** strict mode — always type props and return values
 - **React 19**
 
 ### Styling & UI
 - **Tailwind CSS** — use `cn()` from `lib/utils` for conditional classes
-- **shadcn/ui** — ALL UI components from `components/ui/`. Never install raw Radix primitives. Add with `npx shadcn@latest add <component>`
+- **shadcn/ui** — ALL UI from `components/ui/`. Never install raw Radix primitives. Add with `npx shadcn@latest add <component>`
 - **Lucide React** — icons
-- **GSAP** (`@gsap/react`) — primary animation lib; plugins registered in `lib/gsap.ts`. Framer Motion also present but prefer GSAP for complex animations.
+- **GSAP** (`@gsap/react`) — primary animation lib; plugins registered in `lib/gsap.ts`. Framer Motion present but prefer GSAP for complex animations.
 - **Sonner** — toasts (`toast.success`, `toast.error`)
+
+### Design System (Premium Dark OLED)
+- **Palette**: zinc-950 bg (`#09090B`), zinc-900 surface, emerald-500 accent (`#10B981`), indigo-500 secondary (`#6366F1`)
+- **Tokens**: use `--pr-*` CSS vars only. Never hardcode hex in components. Key tokens:
+  - `--pr-bg` `--pr-surface` `--pr-surface-elevated` — backgrounds
+  - `--pr-accent` `--pr-accent-hover` `--pr-accent-glow` — emerald CTA
+  - `--pr-text` `--pr-text-muted` `--pr-text-subtle` — text hierarchy
+  - `--pr-border` `--pr-border-strong` — borders
+- **Utility classes**: `.glass` `.glass-card` (glassmorphism backdrop-blur), `.bg-dot-grid`, `.section-divider`, `.noise-overlay`
+- **Atmospheric orbs**: large blurred radial divs (`blur-[140px]`) for ambient depth — use `pointer-events-none fixed` layer
+
+### GSAP Conventions
+- Always `gsap.matchMedia()` with `prefers-reduced-motion: no-preference` guard
+- Composite cleanup: assign `cleanupX = () => {}` per listener block, return `() => { cleanupX?.(); cleanupY?.() }` — never early-return inside `mm.add`
+- Plugins: `DrawSVGPlugin` (SVG logo draws), `ScrollTrigger` + `ScrollTrigger.batch` (scroll reveals)
+- 3D tilt on cards: `transformPerspective`, `rotationX/Y`, `elastic.out` snap-back on mouseleave
 
 ### AI / LLM
 - **Vercel AI SDK** (`ai`, `@ai-sdk/react`, `@ai-sdk/openai`) — use `streamText`, `useChat`, `tool()`. No raw OpenAI/Anthropic SDK calls in chat routes.
@@ -53,6 +69,7 @@ app/
   actions/                   # Server Actions
 components/
   ui/                        # shadcn components (DO NOT edit directly)
+  landing-page.tsx           # Marketing landing page (GSAP + premium dark UI)
   chat-*.tsx                 # Chat UI components
   layout/                    # Header, Sidebar
 lib/
@@ -125,7 +142,7 @@ Vercel. Env vars in Vercel dashboard. `next.config.mjs` has CSP headers for Supa
 
 ## Skill Routing
 
-Invoke skills via the Skill tool BEFORE any other action when matched.
+Invoke skills via Skill tool BEFORE any other action when matched.
 
 | Signal | Skill |
 |--------|-------|
