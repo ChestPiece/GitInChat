@@ -29,16 +29,31 @@ export async function createMessage(
     console.warn('[Privacy] Redaction failed in development (saving raw):', error)
   }
 
-  const { data, error } = await supabase
-    .from('messages')
-    .insert({
-      chat_id: chatId,
-      role,
-      content: safeContent,
-    })
-    .select()
-    .single()
-  
-  if (error) throw error
-  return data
+  try {
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({
+        chat_id: chatId,
+        role,
+        content: safeContent,
+      })
+      .select()
+      .single()
+    
+    if (error) {
+      // HR-05: Sanitize error - don't expose DB details to caller
+      console.error('[Messages] Insert error:', error);
+      throw new Error('Failed to save message')
+    }
+    return data
+  } catch (error) {
+    // HR-05: Ensure generic error is thrown
+    if (error instanceof Error) {
+      if (error.message.includes('Failed to save')) {
+        throw error; // Already sanitized
+      }
+    }
+    console.error('[Messages] Unexpected error:', error);
+    throw new Error('Failed to save message')
+  }
 }
