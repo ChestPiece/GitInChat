@@ -5,9 +5,9 @@ import { cookies } from "next/headers";
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
-  const state = requestUrl.searchParams.get("state");
   const origin = requestUrl.origin;
   const response = NextResponse.redirect(`${origin}/chat`);
+  const cookieStore = await cookies();
 
   console.log("[OAuth Callback] Received request:", {
     url: requestUrl.toString(),
@@ -16,15 +16,6 @@ export async function GET(request: Request) {
   });
 
   if (code) {
-    const cookieStore = await cookies();
-    const expectedState = cookieStore.get("oauth_state")?.value;
-
-    if (!state || !expectedState || state !== expectedState) {
-      console.error("[OAuth Callback] Invalid or missing state parameter");
-      response.cookies.delete("oauth_state");
-      return NextResponse.redirect(`${origin}/auth/error`);
-    }
-
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -43,7 +34,6 @@ export async function GET(request: Request) {
       },
     );
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    response.cookies.delete("oauth_state");
 
     if (error) {
       console.error("[OAuth Callback] Error exchanging code:", error);
