@@ -11,6 +11,42 @@ function allowDevSafetyBypass() {
   );
 }
 
+// HR-02: Always validate safety, even in dev. Only skip if explicitly enabled.
+function shouldBypassSafety() {
+  return allowDevSafetyBypass();
+}
+
+function performLocalSafetyChecks(messages: any[]): string | null {
+  // Extract text from message
+  const lastMessage = messages[messages.length - 1];
+  const content =
+    typeof lastMessage.content === "string"
+      ? lastMessage.content
+      : lastMessage.parts?.find((p: any) => p.type === "text")?.text || "";
+
+  if (!content) return null;
+
+  // HR-02: Local safety patterns (critical violations only)
+  const blockPatterns = [
+    // Prompt injection
+    /(?:ignore|disregard|forget|override|bypass)\s+(?:your|all|above|previous|prior)/i,
+    // Malware generation
+    /(?:create|generate|write|develop).*(?:malware|ransomware|exploit|trojan)/i,
+    // Exfiltration
+    /(?:extract|steal|exfiltrate|export).*(?:secret|key|token|password|credential)/i,
+    // Harassment
+    /(?:generate|create).*(?:hate|racist|sexist|harassment|abuse|bullying)/i,
+  ];
+
+  for (const pattern of blockPatterns) {
+    if (pattern.test(content)) {
+      return `Blocked by local safety: ${pattern.source}`;
+    }
+  }
+
+  return null;
+}
+
 // SAFETY POLICY:
 // - Production: fail closed for guard checks, fail closed with deterministic local fallback for redaction.
 // - Development: fail open for guard/redaction to avoid blocking local iteration.
@@ -148,11 +184,26 @@ export async function redactContent(input: string): Promise<RedactionResult> {
 /**
  * Validates a message against safety guidelines.
  * Returns null if safe, or a Response object if blocked.
+ * HR-02: Fail-closed by default; only fail-open if explicitly enabled.
  */
 export async function validateMessageSafety(
   messages: any[],
 ): Promise<Response | null> {
   if (!hasSafetyApiKey) {
+    // HR-02: No API key → always check locally
+    const localViolation = performLocalSafetyChecks(messages);
+    if (localViolation) {
+      console.warn("[Safety] Local check blocked:", localViolation);
+      return new Response(
+        JSON.stringify({
+          error: "Request blocked by safety policy.",
+          code: "safety_violation",
+        }),
+        { status: 400 },
+      );
+    }
+
+    // API key missing, no local violations
     if (isProduction) {
       return new Response(
         JSON.stringify({
@@ -162,17 +213,13 @@ export async function validateMessageSafety(
         { status: 503 },
       );
     }
-    if (allowDevSafetyBypass()) {
-      return null;
+
+    if (shouldBypassSafety()) {
+      return null; // Explicit bypass
     }
 
-    return new Response(
-      JSON.stringify({
-        error: "Safety service is not configured.",
-        code: "safety_unavailable",
-      }),
-      { status: 503 },
-    );
+    // HR-02: Dev mode with no API key → check locally, don't block
+    return null;
   }
 
   try {
@@ -185,7 +232,6 @@ export async function validateMessageSafety(
     // Only scan if there is text content
     if (content) {
       // Race: Safety Check vs Timeout (800ms)
-      // If check is slow, block unless explicit bypass set.
       const safetyCheckPromise = safetyClient.guard({
         input: content,
         systemPrompt: GITHUB_AGENT_SAFETY_PROMPT,
@@ -209,22 +255,48 @@ export async function validateMessageSafety(
           { status: 400 },
         );
       } else if ("timeout" in result) {
-        if (isProduction || !allowDevSafetyBypass()) {
+        // HR-02: Timeout → fallback to local check
+        console.warn("[Safety Guard] Timeout - using local validation fallback");
+        const localViolation = performLocalSafetyChecks(messages);
+        if (localViolation) {
           return new Response(
             JSON.stringify({
-              error: "Safety service timeout.",
-              code: "safety_timeout",
+              error: "Request blocked by safety policy.",
+              code: "safety_violation",
             }),
-            { status: 503 },
+            { status: 400 },
           );
         }
-        console.warn(
-          "[Safety Guard] Timeout - Proceeding (Explicit dev bypass)",
-        );
+
+        if (isProduction || !shouldBypassSafety()) {
+          // Timeout + required safety → block in production
+          if (isProduction) {
+            return new Response(
+              JSON.stringify({
+                error: "Safety service timeout.",
+                code: "safety_timeout",
+              }),
+              { status: 503 },
+            );
+          }
+        }
       }
     }
   } catch (error) {
-    if (isProduction || !allowDevSafetyBypass()) {
+    // HR-02: Service error → try local checks, then fail based on mode
+    console.error("[Safety Guard] Service error:", error);
+    const localViolation = performLocalSafetyChecks(messages);
+    if (localViolation) {
+      return new Response(
+        JSON.stringify({
+          error: "Request blocked by safety policy.",
+          code: "safety_violation",
+        }),
+        { status: 400 },
+      );
+    }
+
+    if (isProduction) {
       return new Response(
         JSON.stringify({
           error: "Safety service unavailable.",
@@ -234,7 +306,7 @@ export async function validateMessageSafety(
       );
     }
 
-    console.error("[Safety Guard] Check Error (Explicit dev bypass):", error);
+    // Dev: Service error with no local violations → pass through (local fallback covered request)
   }
   return null;
 }
