@@ -27,3 +27,22 @@ pokemonCollection-*.json
 
 # TypeScript incremental cache
 *.tsbuildinfo
+
+# Agent/automation generated directories
+.claude/
+.claude-flow/
+.opencode/
+.swarm/
+
+# MCP and VSCode config
+.mcp.json
+.vscode/
+.github/
+
+# Planning artifacts (generated/temporary)
+.planning/codebase/
+.planning/reviews/
+.planning/phases/02-ui-polish-and-design-system/
+
+# Backup files from scripts
+*.original.md
