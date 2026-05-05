@@ -187,29 +187,30 @@ export async function POST(req: Request) {
     }
   }
 
-  const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+const supabase = await createClient();
+  
+  // getUser() validates auth, getSession() provides provider_token for GitHub API
+  const [userResult, sessionResult] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.auth.getSession()
+  ]);
+  
+  const user = userResult.data.user;
+  const session = sessionResult.data.session;
 
-  const allowDevBypass = process.env.ALLOW_DEV_UNAUTHENTICATED_CHAT === "true" && process.env.NODE_ENV !== "production";
-  if (!session && !allowDevBypass) {
-    return new Response("Unauthorized", { status: 401 });
+  // Same auth flow for dev + prod - require user authentication
+  if (!user) {
+    return new Response("Unauthorized - Please sign in via GitHub OAuth", { status: 401 });
   }
 
-  if (!session?.provider_token && !allowDevBypass) {
-    return new Response("GitHub token missing — please sign out and back in.", {
+  const githubToken = session?.provider_token;
+  if (!githubToken) {
+    return new Response("GitHub token missing - Please sign out and sign in again", {
       status: 401,
     });
   }
 
-  // In dev bypass mode without session, skip rate limiting, chat ownership, and RAG
-  const isDevBypass = allowDevBypass && !session;
-  const userId = session?.user?.id;
-
-  if (!userId && !isDevBypass) {
-    return new Response("User ID required", { status: 401 });
-  }
+  const userId = user?.id;
 
   // Rate limiting - check before processing (skip in dev bypass mode)
   if (process.env.NODE_ENV === "production" && userId) {
@@ -243,7 +244,7 @@ export async function POST(req: Request) {
       .eq("id", chatId)
       .single();
 
-    if (error || !chat || chat.user_id !== session?.user?.id) {
+    if (error || !chat || chat.user_id !== user?.id) {
       return new Response("Forbidden: You do not have access to this chat", {
         status: 403,
       });
